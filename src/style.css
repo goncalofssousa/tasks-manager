@@ -1,0 +1,157 @@
+:root {
+  --color-primary: #1D1B37;
+  --color-primary-dark: #131227;
+
+  --color-text-primary: #C3BFFA;
+  --color-text-secondary: #B7B3EA;
+
+  --color-accent: #796FF6;
+  --color-warn: #DF69A8;
+  --color-success: #4caf50;
+  --color-light: #FDFDFF;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  font-family: Poppins, sans-serif;
+
+  background: var(--color-primary);
+  color: var(--color-light);
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.page {
+  width: 100%;
+  max-width: 1000px;
+  margin: auto;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.navbar {
+  width: 100%;
+  max-width: 1000px;
+
+  margin: 0 auto 20px;
+
+  display: flex;
+  gap: 10px;
+
+  padding: 10px;
+
+  background: var(--color-primary-dark);
+  border-radius: 12px;
+}
+
+.navbar a {
+  flex: 1;
+
+  padding: 10px;
+  text-align: center;
+
+  text-decoration: none;
+  color: var(--color-text-secondary);
+
+  border-radius: 10px;
+}
+
+.router-link-active {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* FORM */
+.form {
+  width: 100%;
+
+  display: flex;
+  gap: 10px;
+
+  margin: 20px 0;
+  padding: 12px;
+
+  background: var(--color-primary-dark);
+  border-radius: 12px;
+}
+
+input {
+  flex: 1;
+
+  border: none;
+  outline: none;
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  background: transparent;
+  color: white;
+}
+
+input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+/* TASK CARD */
+.card {
+  width: 100%;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 10px;
+  padding: 14px;
+
+  background: var(--color-primary-dark);
+
+  border-radius: 12px;
+}
+
+.card p {
+  flex: 1;
+}
+
+.card.done p {
+  text-decoration: line-through;
+  opacity: .5;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+
+.btn {
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 500;
+
+  padding: .3rem .7rem;
+  border-radius: 5px;
+  border: 1px solid;
+
+  cursor: pointer;
+  color: var(--color-light);
+  transition: .3s;
+}
+
+.btn:hover {
+  background: var(--color-primary);
+}
