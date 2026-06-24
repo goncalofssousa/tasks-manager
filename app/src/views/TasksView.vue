@@ -1,39 +1,67 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { useTasksStore } from '../stores/tasks'
+import { useTasksStore, type Task } from '../stores/tasks'
 import { Search } from 'lucide-vue-next'
-import Modal from '../components/Modal.vue'
+import TaskModal  from '../components/TaskModal.vue'
 import TaskCard from '../components/TaskCard.vue'
 import TaskFilters from '../components/TaskFilters.vue'
 
 const store = useTasksStore()
 
-const filter = ref<'all' | 'active' | 'done'>('all')
-const newTask = ref('')
-const showModal = ref(false)
 const search = ref('')
+
+const filter = ref<'all' | 'active' | 'done'>('all')
+
+const showModal = ref(false)
+const editingTask = ref<Task | null>(null)
+const isEdit = ref(false)
 
 onMounted(() => store.load())
 
-const canSend = computed(() => {
-  return newTask.value.trim() !== ''
-})
-
 const filtered = computed(() => {
-  if (filter.value === 'active') return store.unDoneTaks.filter(t => t.descricao.toLocaleLowerCase().includes(search.value.toLocaleLowerCase()))
-  if (filter.value === 'done') return store.completeTasks.filter(t => t.descricao.toLocaleLowerCase().includes(search.value.toLocaleLowerCase()))
-  return store.tasks.filter(t => t.descricao.toLocaleLowerCase().includes(search.value.toLocaleLowerCase()))
+  const searchText = search.value.toLowerCase()
+
+  const tasks = filter.value === 'active' ? store.unDoneTaks : filter.value === 'done' ? store.completeTasks : store.tasks
+
+  return tasks.filter(task => task.title.toLowerCase().includes(searchText))
 })
 
 function setFilter(value: 'all' | 'active' | 'done') {
   filter.value = filter.value === value ? 'all' : value
 }
 
-function createTask(){
-  store.addTask(newTask.value)
-  newTask.value = ''
+function newTask(){
+  editingTask.value = null 
+  isEdit.value = false
+  showModal.value = true
+}
+
+function editTask(task: Task){
+  if(!task) return 
+  editingTask.value = task
+  isEdit.value = true
+  showModal.value = true
+}
+
+function handleSubmit(task: {
+                        title: string, 
+                        descricao: string, 
+                        dueDate: string
+                      }){
+  if(isEdit.value && editingTask.value !== null){
+    store.updateTask(editingTask.value.id, task)
+  } else {
+    store.addTask(task.title, task.descricao, task.dueDate)
+  }
+  closeModal()
+}
+
+function closeModal(){
+  isEdit.value = false
+  editingTask.value = null
   showModal.value = false
 }
+
 </script>
 
 <template>
@@ -43,7 +71,7 @@ function createTask(){
 
       <h1>Tasks</h1>
 
-      <button class="add-task-btn" @click="showModal = true">
+      <button class="add-task-btn" @click="newTask">
         + Add Task
       </button>
 
@@ -51,33 +79,19 @@ function createTask(){
 
     <div class="search-bar">
       <Search />
-      <input v-model="search" type="text" placeholder="Search tasks..." />
+
+      <input v-model="search" type="text" placeholder="Search tasks..."/>
     </div>
 
-    <Modal :show="showModal" @close="showModal = false">
-
-      <h2>New Task</h2>
-
-      <input v-model="newTask" placeholder="Write your task..." />
-
-      <div class="modal-actions">
-
-        <button class="modal-btn cancel" @click="showModal = false">
-          Cancel
-        </button>
-
-        <button class="modal-btn confirm" @click="createTask" :disabled="!canSend">
-          Add
-        </button>
-
-      </div>
-
-    </Modal>
-
+    <TaskModal :show="showModal" :mode="isEdit ? 'edit' :'create'" :task="editingTask !== null ? editingTask : undefined"  @submit="handleSubmit" @close="closeModal"/>
+  
     <TaskFilters :filter="filter" @update-filter="setFilter"/>
 
-    <TaskCard v-if="filtered.length > 0" v-for="task in filtered" :key="task.id" :task="task" @done="store.markAsDone" @delete="store.removeTask"/>
-    <p v-else class="empty-state">No Tasks for today! </p>
+    <TaskCard v-if="filtered.length > 0" v-for="task in filtered" :key="task.id" :task="task" @done="store.markAsDone" @delete="store.removeTask" @edit="editTask" @undone="store.markAsUnDone"/>
+
+    <p v-else class="empty-state">
+      No Tasks for today!
+    </p>
 
   </div>
 </template>
@@ -89,8 +103,6 @@ function createTask(){
   margin: 0 auto;
 }
 
-
-/* HEADER LAYOUT */
 .header {
   display: flex;
   align-items: center;
@@ -103,6 +115,7 @@ function createTask(){
   margin: 0;
 }
 
+/* ADD BUTTON */
 .add-task-btn {
   width: auto;
   padding: 8px 12px;
@@ -118,7 +131,7 @@ function createTask(){
 
   cursor: pointer;
 
-  transition: all 0.2s ease;
+  transition: all .2s ease;
 
   display: flex;
   align-items: center;
@@ -131,7 +144,7 @@ function createTask(){
 }
 
 .add-task-btn:active {
-  transform: translateY(0px);
+  transform: translateY(0);
 }
 
 .search-bar {
@@ -139,23 +152,26 @@ function createTask(){
   display: flex;
   align-items: center;
 
-  gap: 5x;
+  gap: 5px;
 
   padding: 10px 14px;
-
   margin: 10px 0 20px;
 
   background: var(--color-primary-dark);
+
   border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
 
-  border: 1px solid rgba(255, 255, 255, 0.06);
-
-  transition: all 0.2s ease;
+  transition: all .2s ease;
 }
 
 .search-bar:focus-within {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(121, 111, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(121,111,246,.15);
+}
+
+.search-bar:hover {
+  border-color: rgba(121,111,246,.4);
 }
 
 .search-bar input {
@@ -166,97 +182,14 @@ function createTask(){
   outline: none;
 
   color: var(--color-light);
-  font-size: 0.95rem;
 
+  font-size: .95rem;
   font-family: Poppins, sans-serif;
 }
 
-/* placeholder */
 .search-bar input::placeholder {
   color: var(--color-text-secondary);
-  opacity: 0.8;
-}
-
-/* icon (lupa) */
-.search-bar .icon {
-  width: 18px;
-  height: 18px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: var(--color-text-secondary);
-  opacity: 0.8;
-}
-
-/* hover subtil */
-.search-bar:hover {
-  border-color: rgba(121, 111, 246, 0.4);
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-
-  margin-top: 12px;
-}
-
-.modal-btn {
-  padding: 10px 14px;
-  border-radius: 10px;
-
-  border: none;
-
-  font-weight: 600;
-  font-size: 0.95rem;
-
-  cursor: pointer;
-
-  transition: all 0.2s ease;
-}
-
-.modal-btn.cancel {
-  background: transparent;
-  color: var(--color-text-secondary);
-}
-
-.modal-btn.cancel:hover {
-  color: white;
-  transform: translateY(-1px);
-}
-
-.modal-btn.confirm {
-  background: var(--color-accent);
-  color: white;
-
-  box-shadow: 0 10px 20px rgba(121, 111, 246, 0.25);
-}
-
-.modal-btn.confirm:hover {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
-}
-
-.modal-btn.confirm:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.modal input {
-  width: 100%;
-  padding: 10px;
-
-  border: none;
-  outline: none;
-
-  border-radius: 10px;
-
-  background: var(--color-primary);
-  color: white;
+  opacity: .8;
 }
 
 .empty-state {
@@ -266,6 +199,7 @@ function createTask(){
   text-align: center;
 
   color: var(--color-text-secondary);
+
   font-size: 1.2rem;
   font-weight: 500;
 }

@@ -2,8 +2,10 @@ import { defineStore } from 'pinia'
 
 export type Task = {
   id: number
+  title: string,
   descricao: string
   done: boolean
+  dueDate?: string
 }
 
 export const useTasksStore = defineStore('tasks', {
@@ -17,13 +19,34 @@ export const useTasksStore = defineStore('tasks', {
   },
 
   actions: {
-    addTask(text: string) {
-      this.tasks.push({
+    addTask(title: string, text: string, date: string) {
+      const task = {
         id: Date.now(),
+        title: title,
         descricao: text,
-        done: false
-      })
+        done: false,
+        dueDate: date
+      }
+      this.tasks.push(task)
       this.save()
+    },
+    removeTask(id: number) {
+      this.tasks = this.tasks.filter(t => t.id !== id)
+      this.save()
+    },
+
+    updateTask(id: number, updatedData: {
+        title: string
+        descricao: string
+        dueDate: string
+    }) {
+        const task = this.tasks.find(t => t.id === id)
+
+        if (!task) return
+
+        task.title = updatedData.title
+        task.descricao = updatedData.descricao
+        task.dueDate = updatedData.dueDate
     },
 
     markAsDone(id: number) {
@@ -32,8 +55,9 @@ export const useTasksStore = defineStore('tasks', {
       this.save()
     },
 
-    removeTask(id: number) {
-      this.tasks = this.tasks.filter(t => t.id !== id)
+    markAsUnDone(id: number) {
+      const task = this.tasks.find(t => t.id === id)
+      if (task) task.done = false
       this.save()
     },
 
