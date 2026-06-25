@@ -142,13 +142,14 @@ const actionsClass = computed(() =>
           <Pencil :size="17" />
         </button>
 
+        <button v-if="!task.done" class="icon-btn add-subtask" @click="$emit('addSubTask', task.id)">
+          +
+        </button>
+
         <button v-else class="icon-btn edit" @click="$emit('undone', task.id)">
           <RotateCcw :size="17" />
         </button>
 
-        <button class="icon-btn add-subtask" @click="$emit('addSubTask', task.id)">
-          +
-        </button>
 
         <button class="icon-btn delete" @click="$emit('delete', task.id)">
           <Trash2 :size="17" />
