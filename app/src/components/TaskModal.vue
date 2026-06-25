@@ -5,30 +5,46 @@ import type { Task } from '../stores/tasks'
 
 const props = defineProps<{
   show: boolean
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit' | 'new-sub-task'
   task?: Task
+  mainTaskId?: number
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'submit', payload: { title: string; descricao: string; dueDate: string }): void
+  (e: 'submit', payload: { title: string; descricao: string; dueDate: string, parentId?: number }): void
 }>()
 
 const title = ref('')
 const descricao = ref('')
 const dueDate = ref('')
 
+const modalTitle = ref('')
+const modalSubmitButtonText = ref('')
+
 watch(() => props.show, (open) => {
-    if (open && props.task) {
+    if (open &&  props.mode === 'edit' && props.task) {
       title.value = props.task.title
       descricao.value = props.task.descricao
       dueDate.value = props.task.dueDate ?? ''
+      modalTitle.value = 'Edit Task'
+      modalSubmitButtonText.value = 'Save Changes'
     }
 
-    if (open && !props.task) {
+    if (open && props.mode === 'create') {
       title.value = ''
       descricao.value = ''
       dueDate.value = ''
+      modalTitle.value = 'New Task'
+      modalSubmitButtonText.value = 'Add Task'
+    }
+
+    if (open && props.mode === 'new-sub-task' && props.mainTaskId){
+      title.value = ''
+      descricao.value = ''
+      dueDate.value = ''
+      modalTitle.value = 'New Sub Task'
+      modalSubmitButtonText.value = 'Add Sub Task'
     }
   }
 )
@@ -39,11 +55,11 @@ const canSend = computed(() => {
 
 function submit() {
   if (!canSend.value) return
-
   emit('submit', {
     title: title.value,
     descricao: descricao.value,
-    dueDate: dueDate.value
+    dueDate: dueDate.value,
+    parentId: props.mainTaskId
   })
 }
 </script>
@@ -52,7 +68,7 @@ function submit() {
   <Modal :show="show" @close="$emit('close')">
 
     <h2>
-      {{ mode === 'edit' ? 'Edit Task' : 'New Task' }}
+      {{ modalTitle }}
     </h2>
 
     <form class="task-form" @submit.prevent="submit">
@@ -74,20 +90,12 @@ function submit() {
 
       <div class="modal-actions">
 
-        <button
-          type="button"
-          class="modal-btn cancel"
-          @click="$emit('close')"
-        >
+        <button type="button" class="modal-btn cancel" @click="$emit('close')">
           Cancel
         </button>
 
-        <button
-          type="submit"
-          class="modal-btn confirm"
-          :disabled="!canSend"
-        >
-          {{ mode === 'edit' ? 'Save Changes' : 'Add Task' }}
+        <button type="submit" class="modal-btn confirm" :disabled="!canSend">
+          {{ modalSubmitButtonText }}
         </button>
 
       </div>

@@ -13,17 +13,24 @@ const search = ref('')
 const filter = ref<'all' | 'active' | 'done'>('all')
 
 const showModal = ref(false)
+const mode = ref<'create' | 'edit' | 'new-sub-task'>('create')
 const editingTask = ref<Task | null>(null)
-const isEdit = ref(false)
+const mainTaskId = ref<number | null>(null)
+
 
 onMounted(() => store.load())
 
-const filtered = computed(() => {
+const filteredTasks = computed(() => {
   const searchText = search.value.toLowerCase()
 
   const tasks = filter.value === 'active' ? store.unDoneTaks : filter.value === 'done' ? store.completeTasks : store.tasks
 
   return tasks.filter(task => task.title.toLowerCase().includes(searchText))
+})
+
+
+const mainTasks = computed(() => {
+  return filteredTasks.value.filter(t => t.parentId === undefined)
 })
 
 function setFilter(value: 'all' | 'active' | 'done') {
@@ -32,32 +39,50 @@ function setFilter(value: 'all' | 'active' | 'done') {
 
 function newTask(){
   editingTask.value = null 
-  isEdit.value = false
+  mainTaskId.value = null
+  mode.value = 'create'
   showModal.value = true
 }
+
+
+function addSubTask(taskId: number){
+  editingTask.value = null
+  mode.value = 'new-sub-task'
+  mainTaskId.value = taskId
+  showModal.value = true
+}
+
 
 function editTask(task: Task){
   if(!task) return 
   editingTask.value = task
-  isEdit.value = true
+  mode.value = 'edit'
+  mainTaskId.value = null
   showModal.value = true
+}
+
+function getSubTasks(taskId: number) {
+  return filteredTasks.value.filter(
+    t => t.parentId === taskId
+  )
 }
 
 function handleSubmit(task: {
                         title: string, 
                         descricao: string, 
-                        dueDate: string
+                        dueDate: string, 
+                        parentId?: number
                       }){
-  if(isEdit.value && editingTask.value !== null){
+  if(mode.value === 'edit' && editingTask.value !== null){
     store.updateTask(editingTask.value.id, task)
   } else {
-    store.addTask(task.title, task.descricao, task.dueDate)
+    store.addTask(task.title, task.descricao, task.dueDate, task.parentId)
   }
   closeModal()
 }
 
 function closeModal(){
-  isEdit.value = false
+  mode.value = 'create'
   editingTask.value = null
   showModal.value = false
 }
@@ -79,15 +104,34 @@ function closeModal(){
 
     <div class="search-bar">
       <Search />
-
       <input v-model="search" type="text" placeholder="Search tasks..."/>
     </div>
 
-    <TaskModal :show="showModal" :mode="isEdit ? 'edit' :'create'" :task="editingTask !== null ? editingTask : undefined"  @submit="handleSubmit" @close="closeModal"/>
+    <TaskModal 
+      :show="showModal" 
+      :mode="mode" 
+      :task="editingTask !== null ? editingTask : undefined"   
+      :main-task-id="mainTaskId !== null ? mainTaskId : undefined"
+      @submit="handleSubmit"    
+      @close="closeModal"
+    />
   
     <TaskFilters :filter="filter" @update-filter="setFilter"/>
 
-    <TaskCard v-if="filtered.length > 0" v-for="task in filtered" :key="task.id" :task="task" @done="store.markAsDone" @delete="store.removeTask" @edit="editTask" @undone="store.markAsUnDone"/>
+    <TaskCard 
+      v-if="mainTasks.length > 0" 
+      v-for="task in mainTasks" 
+
+      :key="task.id" 
+      :task="task" 
+      :subTasks="getSubTasks(task.id)"  
+
+      @done="store.markAsDone" 
+      @delete="store.removeTask" 
+      @edit="editTask" 
+      @undone="store.markAsUnDone"
+      @add-sub-task="addSubTask"
+    />
 
     <p v-else class="empty-state">
       No Tasks for today!

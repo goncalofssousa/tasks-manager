@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
 
+
 export type Task = {
   id: number
   title: string,
   descricao: string
   done: boolean
   dueDate?: string
+  parentId?: number 
 }
 
 export const useTasksStore = defineStore('tasks', {
@@ -19,17 +21,19 @@ export const useTasksStore = defineStore('tasks', {
   },
 
   actions: {
-    addTask(title: string, text: string, date: string) {
+    addTask(title: string, text: string, date: string, parentId?: number) {
       const task = {
         id: Date.now(),
         title: title,
         descricao: text,
         done: false,
-        dueDate: date
+        dueDate: date,
+        parentId: parentId
       }
       this.tasks.push(task)
       this.save()
-    },
+    },  
+
     removeTask(id: number) {
       this.tasks = this.tasks.filter(t => t.id !== id)
       this.save()
@@ -47,6 +51,7 @@ export const useTasksStore = defineStore('tasks', {
         task.title = updatedData.title
         task.descricao = updatedData.descricao
         task.dueDate = updatedData.dueDate
+        this.save()
     },
 
     markAsDone(id: number) {
