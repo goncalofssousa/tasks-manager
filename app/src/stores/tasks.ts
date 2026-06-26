@@ -36,7 +36,7 @@ export const useTasksStore = defineStore('tasks', {
     },  
 
     removeTask(id: number) {
-      this.tasks = this.tasks.filter(t => t.id !== id)
+      this.tasks = this.tasks.filter(t => t.id !== id && t.parentId !== id)
       this.save()
     },
 
@@ -60,13 +60,31 @@ export const useTasksStore = defineStore('tasks', {
       if (task) {
         task.doneDate = new Date().toISOString().split('T')[0]
         task.done = true
+        this.tasks.forEach(t => {
+          if(t.parentId === id && t.id !== id){
+            t.done = true
+            t.doneDate = new Date().toISOString().split('T')[0]
+          }
+        })
       }
       this.save()
     },
 
     markAsUnDone(id: number) {
       const task = this.tasks.find(t => t.id === id)
-      if (task) task.done = false
+      if (task) {
+        task.done = false
+        if(task.parentId !== null){
+          const mainTask = this.tasks.find(t => t.id === task.parentId)
+          if(mainTask){
+            if(mainTask.done){
+              mainTask.done = false
+              mainTask.doneDate = undefined
+
+            }
+          }
+        }
+      }
       this.save()
     },
 

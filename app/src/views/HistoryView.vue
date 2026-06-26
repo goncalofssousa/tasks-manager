@@ -10,6 +10,5 @@
     <h1>History</h1>
 
     <!-- <TaskCard v-for="task in store.completeTasks" :key="task.id" :task="task" @delete="store.removeTask" -->
-    />
   </div>
 </template>

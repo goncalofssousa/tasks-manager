@@ -20,17 +20,14 @@ const mainTaskId = ref<number | null>(null)
 
 onMounted(() => store.load())
 
-const filteredTasks = computed(() => {
+const filteredMainTasks = computed(() => {
   const searchText = search.value.toLowerCase()
+  
+  const mainTasks = store.tasks.filter(t => t.parentId === undefined)
 
-  const tasks = filter.value === 'active' ? store.unDoneTaks : filter.value === 'done' ? store.completeTasks : store.tasks
-
-  return tasks.filter(task => task.title.toLowerCase().includes(searchText))
-})
-
-
-const mainTasks = computed(() => {
-  return filteredTasks.value.filter(t => t.parentId === undefined)
+  return filter.value === 'active' ? mainTasks.filter(t => !t.done && t.title.toLowerCase().includes(searchText)) 
+                            : filter.value === 'done' ? mainTasks.filter(t => t.done && t.title.toLowerCase().includes(searchText)) 
+                            : mainTasks.filter(t => t.title.toLowerCase().includes(searchText))
 })
 
 function setFilter(value: 'all' | 'active' | 'done') {
@@ -62,7 +59,7 @@ function editTask(task: Task){
 }
 
 function getSubTasks(taskId: number) {
-  return filteredTasks.value.filter(
+  return store.tasks.filter(
     t => t.parentId === taskId
   )
 }
@@ -119,8 +116,8 @@ function closeModal(){
     <TaskFilters :filter="filter" @update-filter="setFilter"/>
 
     <TaskCard 
-      v-if="mainTasks.length > 0" 
-      v-for="task in mainTasks" 
+      v-if="filteredMainTasks.length > 0" 
+      v-for="task in filteredMainTasks" 
 
       :key="task.id" 
       :task="task" 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Task } from '../stores/tasks'
-import { computed } from 'vue'
-import { Check, Pencil, Trash2, Calendar, RotateCcw } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { Check, Pencil, Trash2, Calendar, RotateCcw, ChevronDown } from 'lucide-vue-next'
 import SubTaskCard from './SubTaskCard.vue'
 import { useTaskDate } from '../composables/useTaskDate'
 
@@ -13,6 +13,8 @@ const props = defineProps<{
 defineEmits(['done', 'undone', 'delete', 'edit', 'addSubTask'])
 
 const { dueState, timeSinceOverdue } = useTaskDate(props.task)
+
+const showSubTasks = ref(false)
 
 const completedSubTasks = computed(() =>
   props.subTasks.filter(t => t.done).length
@@ -27,6 +29,10 @@ const progress = computed(() =>
 const actionsClass = computed(() =>
   props.subTasks.length ? 'actions' : 'actions-nonSubTasks'
 )
+
+function toggleSubTasks(){
+  showSubTasks.value = !showSubTasks.value
+}
 </script>
 
 <template>
@@ -63,8 +69,15 @@ const actionsClass = computed(() =>
 
         <!-- PROGRESS -->
         <div v-if="subTasks.length" class="progress-wrapper">
-          <div class="progress-text">
-            Subtasks: {{ completedSubTasks }} / {{ subTasks.length }}
+          <div class="progress-header" v-if="subTasks.length">
+            <div class="progress-text">
+              Subtasks: {{ completedSubTasks }} / {{ subTasks.length }}
+            </div>
+
+            <button class="toggle-btn" @click="toggleSubTasks">
+              <ChevronDown :size="16" class="chevron" :class="{ rotated: showSubTasks }"/>
+              <p>{{ showSubTasks ? 'Hide' : 'See' }}</p>
+            </button>
           </div>
 
           <div class="progress-bar">
@@ -76,7 +89,7 @@ const actionsClass = computed(() =>
         </div>
 
         <!-- SUBTASKS -->
-        <div v-if="subTasks.length" class="subtasks">
+        <div v-if="subTasks.length && showSubTasks" class="subtasks">
           <SubTaskCard
             v-for="sub in subTasks"
             :key="sub.id"
@@ -168,6 +181,37 @@ const actionsClass = computed(() =>
 .progress-wrapper {
   margin-top: 14px;
   margin-bottom: 18px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  transition: color .2s;
+}
+
+.toggle-btn:hover {
+  color: white;
+}
+
+.chevron {
+  transition: transform .25s ease;
+}
+
+.chevron.rotated {
+  transform: rotate(180deg);
 }
 
 .progress-text {
