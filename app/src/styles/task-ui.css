@@ -1,0 +1,107 @@
+/* ICON BUTTONS */
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s, opacity .15s;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+  opacity: .85;
+}
+
+.complete {
+  background: rgba(0, 255, 150, .1);
+  color: var(--color-success);
+}
+
+.edit {
+  background: rgba(100, 149, 255, .1);
+  color: #6495ff;
+}
+
+.delete {
+  background: rgba(255, 80, 80, .1);
+  color: var(--color-warn);
+}
+
+.add-subtask {
+  background: rgba(121, 111, 246, .1);
+  color: var(--color-accent);
+  font-size: 23px;
+}
+
+/* DATE STATES */
+.date {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: .72rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex-wrap: wrap;
+}
+
+.overdue {
+  background: rgba(255, 80, 80, .10);
+  color: var(--color-warn);
+  border: 1px solid rgba(255, 80, 80, .25);
+}
+
+.today {
+  background: rgba(255, 200, 0, .10);
+  color: #f5c542;
+  border: 1px solid rgba(255, 200, 0, .25);
+}
+
+.future {
+  background: rgba(121, 111, 246, .10);
+  color: var(--color-accent);
+  border: 1px solid rgba(121, 111, 246, .25);
+}
+
+.done {
+  opacity: .85;
+  background: rgba(0, 255, 150, .08);
+  color: var(--color-success);
+  border: 1px solid rgba(0, 255, 150, .20);
+}
+
+/* WARNING BADGE */
+.warning {
+  padding: 4px 8px;
+  font-size: .7rem;
+  font-weight: 600;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 80, 80, .15);
+  color: var(--color-warn);
+  border: 1px solid rgba(255, 80, 80, .35);
+}
+
+.warning.today {
+  background: rgba(255, 200, 0, .15);
+  color: #f5c542;
+  border: 1px solid rgba(255, 200, 0, .35);
+}
+
+@keyframes pulseWarning {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 80, 80, .35);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(255, 80, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 80, 80, 0);
+  }
+}

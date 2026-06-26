@@ -8,6 +8,7 @@ export type Task = {
   done: boolean
   dueDate?: string
   parentId?: number 
+  doneDate?: string
 }
 
 export const useTasksStore = defineStore('tasks', {
@@ -56,7 +57,10 @@ export const useTasksStore = defineStore('tasks', {
 
     markAsDone(id: number) {
       const task = this.tasks.find(t => t.id === id)
-      if (task) task.done = true
+      if (task) {
+        task.doneDate = new Date().toISOString().split('T')[0]
+        task.done = true
+      }
       this.save()
     },
 

@@ -3,6 +3,7 @@ import type { Task } from '../stores/tasks'
 import { computed } from 'vue'
 import { Check, Pencil, Trash2, Calendar, RotateCcw } from 'lucide-vue-next'
 import SubTaskCard from './SubTaskCard.vue'
+import { useTaskDate } from '../composables/useTaskDate'
 
 const props = defineProps<{
   task: Task
@@ -11,67 +12,20 @@ const props = defineProps<{
 
 defineEmits(['done', 'undone', 'delete', 'edit', 'addSubTask'])
 
-const completedSubTasks = computed(() => {
-  let count = 0
-  for (const t of props.subTasks) {
-    if (t.done) count++
-  }
-  return count
-})
+const { dueState, timeSinceOverdue } = useTaskDate(props.task)
 
-const totalSubTasks = computed(() => props.subTasks.length)
+const completedSubTasks = computed(() =>
+  props.subTasks.filter(t => t.done).length
+)
 
-const progress = computed(() => {
-  const total = totalSubTasks.value
-  return total === 0 ? 0 : (completedSubTasks.value / total) * 100
-})
-
-const today = new Date().setHours(0, 0, 0, 0)
-
-const dueDate = computed<number | null>(() => {
-  const raw = props.task.dueDate
-  if (!raw) return null
-
-  const date = new Date(raw)
-  if (isNaN(date.getTime())) return null
-
-  date.setHours(0, 0, 0, 0)
-  return date.getTime()
-})
-
-type DueState = 'overdue' | 'today' | 'future'
-
-const dueState = computed<DueState>(() => {
-  if (!dueDate.value) return 'future'
-
-  if (dueDate.value < today) return 'overdue'
-  if (dueDate.value === today) return 'today'
-  return 'future'
-})
-
-
-const timeSinceOverdue = computed(() => {
-  if (dueState.value !== 'overdue' || !dueDate.value) return ''
-
-  const diffMs = Date.now() - dueDate.value
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays >= 30) {
-    return `${Math.floor(diffDays / 30)} months overdue`
-  }
-
-  if (diffDays >= 7) {
-    return `${Math.floor(diffDays / 7)} weeks overdue`
-  }
-
-  if (diffDays < 1) return 'Overdue today'
-  if (diffDays === 1) return '1 day overdue'
-
-  return `${diffDays} days overdue`
-})
+const progress = computed(() =>
+  props.subTasks.length === 0
+    ? 0
+    : (completedSubTasks.value / props.subTasks.length) * 100
+)
 
 const actionsClass = computed(() =>
-  props.subTasks.length > 0 ? 'actions' : 'actions-nonSubTasks'
+  props.subTasks.length ? 'actions' : 'actions-nonSubTasks'
 )
 </script>
 
@@ -79,6 +33,7 @@ const actionsClass = computed(() =>
   <div class="card" :class="{ completed: task.done }">
 
     <div class="card-top">
+
       <div class="content">
 
         <h3 class="title">{{ task.title }}</h3>
@@ -89,23 +44,27 @@ const actionsClass = computed(() =>
         <div class="date" :class="dueState">
           <Calendar :size="12" />
 
-          <p>
+          <p v-if="dueState !== 'done'">
             Due Date: {{ task.dueDate || 'No date' }}
           </p>
 
-          <div v-if="timeSinceOverdue" class="warning">
+          <p v-else>
+            Task Completed: {{ task.doneDate }}
+          </p>
+
+          <div v-if="timeSinceOverdue" class="warning overdue">
             ⚠ {{ timeSinceOverdue }}
           </div>
 
           <div v-else-if="dueState === 'today'" class="warning today">
-            ⚠ {{ 'Task due today' }}
+            ⚠ Task due today
           </div>
         </div>
 
         <!-- PROGRESS -->
         <div v-if="subTasks.length" class="progress-wrapper">
           <div class="progress-text">
-            Subtasks: {{ completedSubTasks }} / {{ totalSubTasks }}
+            Subtasks: {{ completedSubTasks }} / {{ subTasks.length }}
           </div>
 
           <div class="progress-bar">
@@ -161,6 +120,7 @@ const actionsClass = computed(() =>
   </div>
 </template>
 
+
 <style scoped>
 .card {
   display: flex;
@@ -176,7 +136,6 @@ const actionsClass = computed(() =>
   opacity: .6;
 }
 
-/* LAYOUT */
 .card-top {
   display: flex;
   align-items: flex-start;
@@ -189,7 +148,6 @@ const actionsClass = computed(() =>
   min-width: 0;
 }
 
-/* TITLE */
 .title {
   margin: 0 0 6px;
   font-size: 1.2rem;
@@ -197,82 +155,18 @@ const actionsClass = computed(() =>
   color: white;
 }
 
-/* DESCRIPTION */
+.card.completed .title {
+  text-decoration: line-through;
+}
+
 .description {
   margin: 0 0 10px;
   color: var(--color-text-secondary);
   font-size: .88rem;
 }
 
-/* DATE */
-.date {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: .72rem;
-  padding: 3px 8px;
-  border-radius: 6px;
-  margin: 0 0 14px;
-  flex-wrap: wrap;
-}
-
-.overdue {
-  background: rgba(255, 80, 80, .10);
-  color: var(--color-warn);
-  border: 1px solid rgba(255, 80, 80, .25);
-}
-
-.today {
-  background: rgba(255, 200, 0, .10);
-  color: #f5c542;
-  border: 1px solid rgba(255, 200, 0, .25);
-}
-
-.future {
-  background: rgba(121, 111, 246, .10);
-  color: var(--color-accent);
-  border: 1px solid rgba(121, 111, 246, .25);
-}
-
-/* OVERDUE BADGE */
-.warning {
-  padding: 4px 8px;
-  font-size: .7rem;
-  font-weight: 600;
-  border-radius: 6px;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-
-  background: rgba(255, 80, 80, .15);
-  color: var(--color-warn);
-  border: 1px solid rgba(255, 80, 80, .35);
-
-  animation: pulseWarning 1.8s infinite;
-}
-
-.warning.today {
-  background: rgba(255, 200, 0, .15);
-  color: #f5c542;
-  border: 1px solid rgba(255, 200, 0, .35);
-}
-
-@keyframes pulseWarning {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 80, 80, .35);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(255, 80, 80, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 80, 80, 0);
-  }
-}
-
-/* PROGRESS */
 .progress-wrapper {
+  margin-top: 14px;
   margin-bottom: 18px;
 }
 
@@ -306,7 +200,6 @@ const actionsClass = computed(() =>
   border-left: 2px solid rgba(255, 255, 255, .08);
 }
 
-/* ACTIONS */
 .actions {
   display: flex;
   flex-direction: column;
@@ -319,39 +212,6 @@ const actionsClass = computed(() =>
   flex-direction: row;
   gap: 6px;
   flex-shrink: 0;
-}
-
-/* BUTTONS */
-.icon-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform .15s, opacity .15s;
-}
-
-.icon-btn:hover {
-  transform: translateY(-1px);
-  opacity: .85;
-}
-
-.complete {
-  background: rgba(0, 255, 150, .1);
-  color: var(--color-success);
-}
-
-.edit {
-  background: rgba(100, 149, 255, .1);
-  color: #6495ff;
-}
-
-.delete {
-  background: rgba(255, 80, 80, .1);
-  color: var(--color-warn);
 }
 
 .add-subtask {
