@@ -16,56 +16,54 @@ const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
 <template>
   <div class="subtask" :class="{ completed: subTask.done }">
 
-    <div class="subtask-left">
+    <div class="subtask-header">
 
       <p class="subtask-title">
         {{ subTask.title }}
       </p>
 
-      <p class="subtask-description">
-        {{ subTask.descricao }}
-      </p>
+      <div class="subtask-actions">
+        <button v-if="!subTask.done" class="icon-btn complete" @click="$emit('done', subTask.id)">
+          <Check :size="13" />
+        </button>
 
-      <div class="date" :class="dueState">
-        <Calendar :size="12" />
+        <button v-if="!subTask.done" class="icon-btn edit" @click="$emit('edit', subTask)">
+          <Pencil :size="13" />
+        </button>
 
-        <p v-if="dueState !== 'done'">
-          Due Date: {{ subTask.dueDate || 'No date' }}
-        </p>
+        <button v-else class="icon-btn edit" @click="$emit('undone', subTask.id)">
+          <RotateCcw :size="13" />
+        </button>
 
-        <p v-else>
-          Task Completed: {{ subTask.doneDate }}
-        </p>
-
-        <div v-if="timeSinceOverdue" class="warning overdue">
-          ⚠ {{ timeSinceOverdue }}
-        </div>
-
-        <div v-else-if="dueState === 'today'" class="warning today">
-          ⚠ Task due today
-        </div>
+        <button class="icon-btn delete" @click="$emit('delete', subTask.id)">
+          <Trash2 :size="13" />
+        </button>
       </div>
 
     </div>
 
-    <div class="subtask-actions">
+    <p v-if="subTask.descricao" class="subtask-description">
+      {{ subTask.descricao }}
+    </p>
 
-      <button v-if="!subTask.done" class="icon-btn complete" @click="$emit('done', subTask.id)">
-        <Check :size="13" />
-      </button>
+    <div class="date" :class="dueState">
+      <Calendar :size="12" />
 
-      <button v-if="!subTask.done" class="icon-btn edit" @click="$emit('edit', subTask)">
-        <Pencil :size="13" />
-      </button>
+      <p v-if="dueState !== 'done'">
+        Due Date: {{ subTask.dueDate || 'No date' }}
+      </p>
 
-      <button v-else class="icon-btn edit" @click="$emit('undone', subTask.id)">
-        <RotateCcw :size="13" />
-      </button>
+      <p v-else>
+        Task Completed: {{ subTask.doneDate }}
+      </p>
 
-      <button class="icon-btn delete" @click="$emit('delete', subTask.id)">
-        <Trash2 :size="13" />
-      </button>
+      <div v-if="timeSinceOverdue" class="warning overdue">
+        ⚠ {{ timeSinceOverdue }}
+      </div>
 
+      <div v-else-if="dueState === 'today'" class="warning today">
+        ⚠ Task due today
+      </div>
     </div>
 
   </div>
@@ -75,9 +73,9 @@ const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
 <style scoped>
 .subtask {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  gap: 5px;
   padding: 10px 12px;
   border-radius: 10px;
   background: rgba(255,255,255,.03);
@@ -87,13 +85,15 @@ const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
   opacity: .55;
 }
 
-.subtask-left {
-  flex: 1;
-  min-width: 0;
+.subtask-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .subtask-title {
-  margin: 0 0 6px;
   color: white;
   font-size: .88rem;
   font-weight: 500;

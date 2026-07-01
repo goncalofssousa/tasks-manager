@@ -41,4 +41,10 @@ defineEmits(['close'])
   flex-direction: column;
   gap: 12px;
 }
+
+@media (max-width: 600px) {
+  .modal {
+    max-width: 80%;
+  }
+}
 </style>
