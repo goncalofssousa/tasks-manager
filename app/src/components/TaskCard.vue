@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { Task } from '../stores/tasks'
+import type { Task } from '../types/tasks'
 import { computed, ref } from 'vue'
 import { Check, Pencil, Trash2, Calendar, RotateCcw, ChevronDown } from 'lucide-vue-next'
 import SubTaskCard from './SubTaskCard.vue'
-import { useTaskDate } from '../composables/useTaskDate'
+import { useTaskState } from '../composables/useTaskState.ts'
 
 const props = defineProps<{
   task: Task
@@ -12,7 +12,7 @@ const props = defineProps<{
 
 defineEmits(['done', 'undone', 'delete', 'edit', 'addSubTask'])
 
-const { dueState, timeSinceOverdue } = useTaskDate(props.task)
+const { dueState, timeSinceOverdue } = useTaskState(props.task)
 
 const showSubTasks = ref(false)
 
@@ -26,10 +26,6 @@ const progress = computed(() =>
     : (completedSubTasks.value / props.subTasks.length) * 100
 )
 
-const actionsClass = computed(() =>
-  props.subTasks.length ? 'actions' : 'actions-nonSubTasks'
-)
-
 function toggleSubTasks(){
   showSubTasks.value = !showSubTasks.value
 }
@@ -37,75 +33,10 @@ function toggleSubTasks(){
 
 <template>
   <div class="card" :class="{ completed: task.done }">
+    <div class="header">
+      <h3 class="title">{{ task.title }}</h3>
 
-    <div class="card-top">
-
-      <div class="content">
-
-        <h3 class="title">{{ task.title }}</h3>
-
-        <p class="description">{{ task.descricao }}</p>
-
-        <!-- DATE -->
-        <div class="date" :class="dueState">
-          <Calendar :size="12" />
-
-          <p v-if="dueState !== 'done'">
-            Due Date: {{ task.dueDate || 'No date' }}
-          </p>
-
-          <p v-else>
-            Task Completed: {{ task.doneDate }}
-          </p>
-
-          <div v-if="timeSinceOverdue" class="warning overdue">
-            ⚠ {{ timeSinceOverdue }}
-          </div>
-
-          <div v-else-if="dueState === 'today'" class="warning today">
-            ⚠ Task due today
-          </div>
-        </div>
-
-        <!-- PROGRESS -->
-        <div v-if="subTasks.length" class="progress-wrapper">
-          <div class="progress-header" v-if="subTasks.length">
-            <div class="progress-text">
-              Subtasks: {{ completedSubTasks }} / {{ subTasks.length }}
-            </div>
-
-            <button class="toggle-btn" @click="toggleSubTasks">
-              <ChevronDown :size="16" class="chevron" :class="{ rotated: showSubTasks }"/>
-              <p>{{ showSubTasks ? 'Hide' : 'See' }}</p>
-            </button>
-          </div>
-
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              :style="{ width: progress + '%' }"
-            />
-          </div>
-        </div>
-
-        <!-- SUBTASKS -->
-        <div v-if="subTasks.length && showSubTasks" class="subtasks">
-          <SubTaskCard
-            v-for="sub in subTasks"
-            :key="sub.id"
-            :sub-task="sub"
-            @done="$emit('done', sub.id)"
-            @undone="$emit('undone', sub.id)"
-            @delete="$emit('delete', sub.id)"
-            @edit="$emit('edit', sub)"
-          />
-        </div>
-
-      </div>
-
-      <!-- ACTIONS -->
-      <div :class="actionsClass">
-
+      <div class="actions">
         <button v-if="!task.done" class="icon-btn complete" @click="$emit('done', task.id)">
           <Check :size="17" />
         </button>
@@ -122,50 +53,98 @@ function toggleSubTasks(){
           <RotateCcw :size="17" />
         </button>
 
-
         <button class="icon-btn delete" @click="$emit('delete', task.id)">
           <Trash2 :size="17" />
         </button>
+      </div>
+    </div>
 
+    <p v-if="task.descricao" class="description">{{ task.descricao }}</p>
+
+    <div class="date" :class="dueState">
+      <Calendar :size="12" />
+
+      <p v-if="dueState !== 'done'">
+        Due Date: {{ task.dueDate || 'No date' }}
+      </p>
+
+      <p v-else>
+        Task Completed: {{ task.doneDate }}
+      </p>
+
+      <div v-if="timeSinceOverdue" class="warning overdue">
+        ⚠ {{ timeSinceOverdue }}
       </div>
 
+      <div v-else-if="dueState === 'today'" class="warning today">
+        ⚠ Task due today
+      </div>
+    </div>
+
+    <div v-if="subTasks.length" class="progress-wrapper">
+      <div class="progress-header">
+        <div class="progress-text">
+          Subtasks: {{ completedSubTasks }} / {{ subTasks.length }}
+        </div>
+
+        <button class="toggle-btn" @click="toggleSubTasks">
+          <ChevronDown :size="16" class="chevron" :class="{ rotated: showSubTasks }"/>
+          <span class="toggle-text">{{ showSubTasks ? 'Hide' : 'See' }}</span>
+        </button>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: progress + '%' }"/>
+      </div>
+    </div>
+
+    <div v-if="subTasks.length && showSubTasks" class="subtasks">
+      <SubTaskCard
+        v-for="sub in subTasks"
+        :key="sub.id"
+        :sub-task="sub"
+        @done="$emit('done', sub.id)"
+        @undone="$emit('undone', sub.id)"
+        @delete="$emit('delete', sub.id)"
+        @edit="$emit('edit', sub)"
+      />
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .card {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
   padding: 18px;
+  margin-top: 10px;
   margin-bottom: 12px;
   background: var(--color-primary-dark);
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, .06);
+  box-sizing: border-box;
 }
 
 .card.completed {
   opacity: .6;
 }
 
-.card-top {
+.header {
   display: flex;
-  align-items: flex-start;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
-  gap: 12px;
-}
-
-.content {
-  flex: 1;
-  min-width: 0;
 }
 
 .title {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
   color: white;
+  line-height: 1.4;
 }
 
 .card.completed .title {
@@ -173,14 +152,28 @@ function toggleSubTasks(){
 }
 
 .description {
-  margin: 0 0 10px;
+  margin: 0;
   color: var(--color-text-secondary);
   font-size: .88rem;
+  line-height: 1.5;
 }
 
+.card.completed .description {
+  text-decoration: line-through;
+}
+
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+/* PROGRESS */
 .progress-wrapper {
-  margin-top: 14px;
-  margin-bottom: 18px;
+  margin-top: 6px;
+  width: 100%;
 }
 
 .progress-header {
@@ -190,6 +183,12 @@ function toggleSubTasks(){
   margin-bottom: 8px;
 }
 
+.progress-text {
+  font-size: .75rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
 .toggle-btn {
   background: transparent;
   border: none;
@@ -197,13 +196,18 @@ function toggleSubTasks(){
   padding: 4px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
   color: var(--color-text-secondary);
   transition: color .2s;
 }
 
 .toggle-btn:hover {
   color: white;
+}
+
+.toggle-text {
+  font-size: .75rem;
+  font-weight: 500;
 }
 
 .chevron {
@@ -214,15 +218,9 @@ function toggleSubTasks(){
   transform: rotate(180deg);
 }
 
-.progress-text {
-  font-size: .75rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 8px;
-}
-
 .progress-bar {
   width: 100%;
-  height: 5px;
+  height: 6px;
   background: rgba(255, 255, 255, .06);
   border-radius: 999px;
   overflow: hidden;
@@ -239,28 +237,44 @@ function toggleSubTasks(){
 .subtasks {
   display: flex;
   flex-direction: column;
+  width: 100%;
   gap: 8px;
   padding-left: 14px;
+  margin-top: 4px;
   border-left: 2px solid rgba(255, 255, 255, .08);
+  box-sizing: border-box;
 }
 
+/* ACTIONS & BUTTONS */
 .actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 6px;
-  flex-shrink: 0;
 }
 
-.actions-nonSubTasks{
+.icon-btn {
   display: flex;
-  flex-direction: row;
-  gap: 6px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 
 .add-subtask {
   background: rgba(121, 111, 246, .1);
   color: var(--color-accent);
-  font-size: 23px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 0;
+  padding-bottom: 2px; /* Pequeno ajuste ótico para o caractere '+' ficar perfeitamente centrado */
+}
+
+.add-subtask:hover {
+  background: rgba(121, 111, 246, .2);
 }
 </style>

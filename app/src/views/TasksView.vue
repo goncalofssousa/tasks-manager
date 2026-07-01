@@ -1,38 +1,50 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
-import { useTasksStore, type Task } from '../stores/tasks'
+import { computed, ref} from 'vue'
+import { useTasksStore } from '../stores/tasks'
 import { Search } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
 import TaskCard from '../components/TaskCard.vue'
-import TaskFilters from '../components/TaskFilters.vue'
+import type { Filter } from '../types/filter.ts'
+import Filters from '../components/Filters.vue'
+import type { Task } from '../types/tasks.ts'
+import Message from '../components/Message.vue'
 
 const store = useTasksStore()
 
+// Filters 
+const filters: Filter[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Active', value: 'active' },
+  { label: 'Done', value: 'done' }
+]
 const search = ref('')
-
 const filter = ref<'all' | 'active' | 'done'>('all')
-
-const showModal = ref(false)
-const mode = ref<'create' | 'edit' | 'new-sub-task'>('create')
-const editingTask = ref<Task | null>(null)
-const mainTaskId = ref<number | null>(null)
-
-
-onMounted(() => store.load())
-
-const filteredMainTasks = computed(() => {
-  const searchText = search.value.toLowerCase()
-  
-  const mainTasks = store.tasks.filter(t => t.parentId === undefined)
-
-  return filter.value === 'active' ? mainTasks.filter(t => !t.done && t.title.toLowerCase().includes(searchText)) 
-                            : filter.value === 'done' ? mainTasks.filter(t => t.done && t.title.toLowerCase().includes(searchText)) 
-                            : mainTasks.filter(t => t.title.toLowerCase().includes(searchText))
-})
 
 function setFilter(value: 'all' | 'active' | 'done') {
   filter.value = filter.value === value ? 'all' : value
 }
+
+const filteredMainTasks = computed(() => {
+  const searchText = search.value.toLowerCase()
+  const f = filter.value
+
+  return store.tasks.filter(t => {
+    if (t.parentId !== undefined) return false
+    if (!t.title.toLowerCase().includes(searchText)) return false
+
+    if (f === 'active') return !t.done
+    if (f === 'done') return t.done
+
+    return true
+  })
+})
+
+
+// Modals and actions 
+const showModal = ref(false)
+const mode = ref<'create' | 'edit' | 'new-sub-task'>('create')
+const editingTask = ref<Task | null>(null)
+const mainTaskId = ref<number | null>(null)
 
 function newTask(){
   editingTask.value = null 
@@ -41,14 +53,12 @@ function newTask(){
   showModal.value = true
 }
 
-
 function addSubTask(taskId: number){
   editingTask.value = null
   mode.value = 'new-sub-task'
   mainTaskId.value = taskId
   showModal.value = true
 }
-
 
 function editTask(task: Task){
   if(!task) return 
@@ -58,11 +68,20 @@ function editTask(task: Task){
   showModal.value = true
 }
 
-function getSubTasks(taskId: number) {
-  return store.tasks.filter(
-    t => t.parentId === taskId
-  )
-}
+function markAsDone(id: number){
+  store.markAsDone(id)
+  openMessage('success', 'Task completed sucessfully')
+} 
+
+function markAsUnDone(id: number){
+  store.markAsUnDone(id)
+  openMessage('success', 'Task reopened sucessfully')
+} 
+
+function removeTask(id: number){
+  store.removeTask(id)
+  openMessage('success', 'Task removed sucessfully')
+} 
 
 function handleSubmit(task: {
                         title: string, 
@@ -72,8 +91,10 @@ function handleSubmit(task: {
                       }){
   if(mode.value === 'edit' && editingTask.value !== null){
     store.updateTask(editingTask.value.id, task)
+    openMessage('success', `Task edited sucessfully`)
   } else {
     store.addTask(task.title, task.descricao, task.dueDate, task.parentId)
+    openMessage('success', `Task ${task.title} added sucessfully`)
   }
   closeModal()
 }
@@ -84,6 +105,32 @@ function closeModal(){
   showModal.value = false
 }
 
+// subTasks 
+const subTasksMap = computed(() => {
+  const map: Record<number, Task[]> = {}
+
+  for (const t of store.tasks) {
+    if (t.parentId == null) continue
+
+    if (!map[t.parentId]) map[t.parentId] = []
+    map[t.parentId].push(t)
+  }
+
+  return map
+})
+
+//messages
+const showMsg = ref(false)
+const msgType = ref<'success' | 'error' | 'cancel'>('success')
+const msgText = ref('')
+
+function openMessage(type: typeof msgType.value,text: string) {
+  msgType.value = type
+  msgText.value = text
+  showMsg.value = true
+
+  setTimeout(() => {showMsg.value = false}, 2500)
+}
 </script>
 
 <template>
@@ -101,7 +148,7 @@ function closeModal(){
 
     <div class="search-bar">
       <Search />
-      <input v-model="search" type="text" placeholder="Search tasks..."/>
+      <input id="search" v-model="search" type="text" placeholder="Search tasks..."/>
     </div>
 
     <TaskModal 
@@ -113,26 +160,28 @@ function closeModal(){
       @close="closeModal"
     />
   
-    <TaskFilters :filter="filter" @update-filter="setFilter"/>
+    <Filters :all-filters="filters" :current-filter-value="filter" @update-filter="setFilter"/>
+
+    <p v-if="filteredMainTasks.length === 0" class="empty-state"> 
+      No tasks for today!  
+    </p>
 
     <TaskCard 
-      v-if="filteredMainTasks.length > 0" 
+      v-else
       v-for="task in filteredMainTasks" 
 
       :key="task.id" 
       :task="task" 
-      :subTasks="getSubTasks(task.id)"  
+      :subTasks="subTasksMap[task.id] || []"  
 
-      @done="store.markAsDone" 
-      @delete="store.removeTask" 
+      @done="markAsDone" 
+      @delete="removeTask" 
       @edit="editTask" 
-      @undone="store.markAsUnDone"
+      @undone="markAsUnDone"
       @add-sub-task="addSubTask"
     />
-
-    <p v-else class="empty-state">
-      No Tasks for today!
-    </p>
+    
+    <Message :show="showMsg" :type="msgType" :msg="msgText" @close="showMsg = false"/>
 
   </div>
 </template>

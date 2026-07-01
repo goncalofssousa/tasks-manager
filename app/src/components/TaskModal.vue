@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import Modal from '../components/Modal.vue'
-import type { Task } from '../stores/tasks'
+import type { Task } from '../types/tasks.ts'
+
 
 const props = defineProps<{
   show: boolean
@@ -25,7 +26,7 @@ const modalSubmitButtonText = ref('')
 watch(() => props.show, (open) => {
     if (open &&  props.mode === 'edit' && props.task) {
       title.value = props.task.title
-      descricao.value = props.task.descricao
+      descricao.value = props.task.descricao ?? ''
       dueDate.value = props.task.dueDate ?? ''
       modalTitle.value = 'Edit Task'
       modalSubmitButtonText.value = 'Save Changes'
@@ -50,7 +51,7 @@ watch(() => props.show, (open) => {
 )
 
 const canSend = computed(() => {
-  return title.value.trim() !== '' && descricao.value.trim() !== ''
+  return title.value.trim() !== '' 
 })
 
 function submit() {
@@ -74,18 +75,18 @@ function submit() {
     <form class="task-form" @submit.prevent="submit">
 
       <div class="form-group">
-        <label>Title</label>
-        <input v-model="title" placeholder="Task title..." />
+        <label for="title">Title</label>
+        <input id="title" v-model="title" placeholder="Task title..." />
       </div>
 
       <div class="form-group">
-        <label>Description</label>
-        <textarea v-model="descricao" rows="4" placeholder="Describe your task..."></textarea>
+        <label for="desc">Description</label>
+        <textarea id="desc" v-model="descricao" rows="4" placeholder="Describe your task..."></textarea>
       </div>
 
       <div class="form-group">
-        <label>Due Date</label>
-        <input type="date" v-model="dueDate" />
+        <label for="date" >Due Date</label>
+        <input id="date" type="date" v-model="dueDate" />
       </div>
 
       <div class="modal-actions">

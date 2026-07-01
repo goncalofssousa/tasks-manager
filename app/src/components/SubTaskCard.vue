@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Task } from '../stores/tasks'
+import type { Task } from '../types/tasks.ts'
 import { Check, Pencil, Trash2, Calendar, RotateCcw } from 'lucide-vue-next'
-import { useTaskDate } from '../composables/useTaskDate'
+import { useTaskState } from '../composables/useTaskState.ts'
 import '../styles/task-ui.css'
 
 const props = defineProps<{
@@ -10,7 +10,7 @@ const props = defineProps<{
 
 defineEmits(['done', 'undone', 'edit', 'delete'])
 
-const { dueState, timeSinceOverdue } = useTaskDate(props.subTask)
+const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
 </script>
 
 <template>

@@ -1,15 +1,6 @@
 import { defineStore } from 'pinia'
-
-
-export type Task = {
-  id: number
-  title: string,
-  descricao: string
-  done: boolean
-  dueDate?: string
-  parentId?: number 
-  doneDate?: string
-}
+import { useHistoryStore } from './history'
+import type { Task } from '../types/tasks'
 
 export const useTasksStore = defineStore('tasks', {
   state: () => ({
@@ -32,12 +23,21 @@ export const useTasksStore = defineStore('tasks', {
         parentId: parentId
       }
       this.tasks.push(task)
-      this.save()
+      const historyStore = useHistoryStore()
+      if(parentId === null || parentId === undefined) historyStore.addActivity("task_created", task.id, task.title)
+      else historyStore.addActivity("task_created", task.id, task.title, task.parentId)
     },  
 
     removeTask(id: number) {
+      const historyStore = useHistoryStore()
+
+      const task = this.tasks.find(t => t.id === id)
+      if(!task) return 
+
+      if(task.parentId === null || task.parentId === undefined) historyStore.addActivity("task_removed", id, task.title)
+      else historyStore.addActivity("task_removed", id, task.title, task.parentId) 
+
       this.tasks = this.tasks.filter(t => t.id !== id && t.parentId !== id)
-      this.save()
     },
 
     updateTask(id: number, updatedData: {
@@ -49,30 +49,40 @@ export const useTasksStore = defineStore('tasks', {
 
         if (!task) return
 
+        const historyStore = useHistoryStore()
         task.title = updatedData.title
         task.descricao = updatedData.descricao
+        if(task.dueDate !== updatedData.dueDate){
+          if(task.parentId !== undefined) historyStore.addActivity("deadline_changed", task.id, task.title, task.parentId)
+          else historyStore.addActivity("deadline_changed", task.id, task.title)
+        }
         task.dueDate = updatedData.dueDate
-        this.save()
     },
 
     markAsDone(id: number) {
       const task = this.tasks.find(t => t.id === id)
       if (task) {
+        const historyStore = useHistoryStore()
         task.doneDate = new Date().toISOString().split('T')[0]
         task.done = true
+        if(task.parentId !== undefined) {
+          historyStore.addActivity("task_completed", task.id, task.title, task.parentId)
+          return 
+        }
         this.tasks.forEach(t => {
           if(t.parentId === id && t.id !== id){
             t.done = true
             t.doneDate = new Date().toISOString().split('T')[0]
           }
         })
+        historyStore.addActivity("task_completed", task.id, task.title)
       }
-      this.save()
     },
 
     markAsUnDone(id: number) {
       const task = this.tasks.find(t => t.id === id)
       if (task) {
+        const historyStore = useHistoryStore()
         task.done = false
         if(task.parentId !== null){
           const mainTask = this.tasks.find(t => t.id === task.parentId)
@@ -80,26 +90,14 @@ export const useTasksStore = defineStore('tasks', {
             if(mainTask.done){
               mainTask.done = false
               mainTask.doneDate = undefined
-
             }
           }
+          historyStore.addActivity("task_undone", task.id, task.title, task.parentId)
+        }
+        else {
+          historyStore.addActivity("task_undone", task.id, task.title)
         }
       }
-      this.save()
     },
-
-    deleteAll() {
-      this.tasks = []
-      this.save()
-    },
-
-    save() {
-      localStorage.setItem('tasks', JSON.stringify(this.tasks))
-    },
-
-    load() {
-      const data = localStorage.getItem('tasks')
-      if (data) this.tasks = JSON.parse(data)
-    }
   }
 })

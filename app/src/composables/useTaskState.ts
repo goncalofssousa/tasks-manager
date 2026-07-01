@@ -1,9 +1,8 @@
 import { computed } from 'vue'
-import type { Task } from '../stores/tasks'
+import type { Task, DueState } from '../types/tasks.ts'
 
-export type DueState = 'overdue' | 'today' | 'future' | 'done'
 
-export function useTaskDate(task: Task) {
+export function useTaskState(task: Task) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
