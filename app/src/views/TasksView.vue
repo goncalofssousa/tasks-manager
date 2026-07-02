@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search } from 'lucide-vue-next'
+import { Search, CircleCheckBig  } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
 import TaskCard from '../components/TaskCard.vue'
 import type { Filter } from '../types/filter.ts'
@@ -135,7 +135,7 @@ function openMessage(type: typeof msgType.value,text: string) {
     </div>
 
     <div class="search-bar">
-      <Search />
+      <Search class="icon-search"/>
       <input id="search" v-model="search" type="text" placeholder="Search tasks..."/>
     </div>
 
@@ -150,9 +150,10 @@ function openMessage(type: typeof msgType.value,text: string) {
   
     <Filters :all-filters="filters" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
 
-    <p v-if="filteredMainTasks.length === 0" class="empty-state"> 
-      No tasks for today!  
-    </p>
+    <div v-if="filteredMainTasks.length === 0" class="empty-state">
+      <CircleCheckBig :size="40" />
+      <p>Enjoy the free time — no tasks yet</p>
+    </div>
 
     <TaskCard 
       v-else
@@ -227,6 +228,7 @@ function openMessage(type: typeof msgType.value,text: string) {
 
 .search-bar {
   width: 100%;
+  height: 4rem; 
   display: flex;
   align-items: center;
 
@@ -242,6 +244,12 @@ function openMessage(type: typeof msgType.value,text: string) {
 
   transition: all .2s ease;
 }
+
+.icon-search {
+  height: 25px;
+  width: 25px;
+  flex-shrink: 0;
+} 
 
 .search-bar:focus-within {
   border-color: var(--color-accent);
@@ -271,15 +279,30 @@ function openMessage(type: typeof msgType.value,text: string) {
 }
 
 .empty-state {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
   margin-top: 10%;
 
-  text-align: center;
-
   color: var(--color-text-secondary);
-
-  font-size: 1.2rem;
-  font-weight: 500;
 }
 
+.empty-state p {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .search-bar {
+    height: 3rem;
+  }
+
+  .icon-search {
+    height: 20px;
+    width: 20px;
+  }
+}
 </style>
