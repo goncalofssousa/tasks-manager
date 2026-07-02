@@ -42,7 +42,7 @@ const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
 
     </div>
 
-    <p v-if="subTask.descricao" class="subtask-description">
+    <p v-if="subTask.descricao  " class="subtask-description">
       {{ subTask.descricao }}
     </p>
 

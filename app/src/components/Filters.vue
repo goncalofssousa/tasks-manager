@@ -1,115 +1,79 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Filter } from '../types/filter';
+import type { Filter } from '../types/filter'
 
-const props = defineProps<{ 
+const props = defineProps<{
   allFilters: Filter[]
-  currentFilterValue: string 
+  currentFilterValues: string[]
 }>()
 
-const emit = defineEmits(['updateFilter'])
+const emit = defineEmits<{
+  clickedFilter: [value: string]
+}>()
 
-const sliderStyle = computed(() => {
-  const index = props.allFilters.findIndex(
-    f => f.value === props.currentFilterValue
-  )
-
-  const width = 100 / props.allFilters.length
-
-  return {
-    width: `calc(${width}%)`,
-    transform: `translateX(${index * 100}%)`
-  }
-})
 </script>
 
 <template>
   <div class="filters">
-    
-    <div class="slider" :style="sliderStyle"></div>
-
-    <button v-for="f in props.allFilters" :key="f.value" class="seg-btn" @click="emit('updateFilter', f.value)" :class="{ active: currentFilterValue === f.value }">
-      {{ f.label }}
+    <button class="pill" :class="{ active: currentFilterValues.includes('all') }" @click="$emit('clickedFilter', 'all')">
+      All
     </button>
 
+    <button v-for="f in allFilters" :key="f.value" class="pill" :class="{ active: currentFilterValues.includes(f.value) }" @click="$emit('clickedFilter', f.value)">
+      {{ f.label }}
+    </button>
   </div>
 </template>
 
 <style scoped>
 .filters {
   display: flex;
-  width: 100%;
-
-  background: var(--color-primary-dark);
-  border-radius: 14px;
-
-  gap: 6px; 
-
-  position: relative;
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.filters button {
-  flex: 1;
-  height: 60px;
+.pill {
+  padding: 8px 14px;
 
-  border: none;
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 999px;
 
-  background: transparent;
+  background: var(--color-primary-dark);
+  color: var(--color-text-secondary);
 
-  font-size: 0.95rem;
+  font-family: Poppins, sans-serif;
+  font-size: .82rem;
   font-weight: 500;
 
   cursor: pointer;
-
-  transition: all 0.2s ease;
-
-  color: var(--color-text-secondary);
-  z-index: 1;
-  font-family: Poppins, sans-serif;
+  transition: all .15s ease;
+  white-space: nowrap;
 }
 
-.filters .seg-btn.active {
-  color: #ffffff !important;
-  font-weight: 700;
-}
-
-.filters button:hover {
+.pill:hover {
+  border-color: rgba(255, 255, 255, .18);
   color: white;
-  transform: translateY(-1px);
 }
 
-.slider {
-  position: absolute;
-  top: 0px;
-  bottom: 0px;
-
-  border-radius: 14px;
-  background: var(--color-accent);
-
-  transition: transform 0.3s ease, width 0.3s ease;
-
-  box-shadow: 0 6px 16px rgba(121, 111, 246, 0.25);
-  overflow: hidden;
+.pill.active {
+  background: rgba(121, 111, 246, .15);
+  border-color: rgba(121, 111, 246, .5);
+  color: var(--color-accent);
 }
 
-.filters:hover .slider {
-  filter: brightness(1.08);
+.pill:active {
+  transform: scale(0.96);
 }
 
-@media (max-width: 600px) {
-  .filters button {
-    font-size: 0.68rem;
-    padding: 0 2px;
-    height: 40px;
-    letter-spacing: -0.01em;
+@media (max-width: 480px) {
+  .filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pill {
+    flex-shrink: 0;
   }
 }
-
-@media (max-width: 400px) {
-  .filters button {
-    font-size: 0.6rem;
-  }
-} 
 </style>

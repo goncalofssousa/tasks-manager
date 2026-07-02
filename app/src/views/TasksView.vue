@@ -9,34 +9,37 @@ import Filters from '../components/Filters.vue'
 import type { Task } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
 
+
 const store = useTasksStore()
 
 // Filters 
 const filters: Filter[] = [
-  { label: 'All', value: 'all' },
   { label: 'Active', value: 'active' },
   { label: 'Done', value: 'done' }
 ]
 const search = ref('')
-const filter = ref<'all' | 'active' | 'done'>('all')
+const currentFilterValues = ref<string[]>(['all'])
 
-function setFilter(value: 'all' | 'active' | 'done') {
-  filter.value = filter.value === value ? 'all' : value
+function handleFilterClicked(value: string) {
+  currentFilterValues.value = [value]
 }
 
 const filteredMainTasks = computed(() => {
   const searchText = search.value.toLowerCase()
-  const f = filter.value
 
-  return store.tasks.filter(t => {
-    if (t.parentId !== undefined) return false
-    if (!t.title.toLowerCase().includes(searchText)) return false
+  return store.mainTasks
+    .filter(t => {
+      if (!t.title.toLowerCase().includes(searchText))
+        return false
 
-    if (f === 'active') return !t.done
-    if (f === 'done') return t.done
+      if (currentFilterValues.value.includes('active'))
+        return !t.done
 
-    return true
-  })
+      if (currentFilterValues.value.includes('done'))
+        return t.done
+
+      return true
+    })
 })
 
 
@@ -104,21 +107,6 @@ function closeModal(){
   editingTask.value = null
   showModal.value = false
 }
-
-// subTasks 
-const subTasksMap = computed(() => {
-  const map: Record<number, Task[]> = {}
-
-  for (const t of store.tasks) {
-    if (t.parentId == null) continue
-
-    if (!map[t.parentId]) map[t.parentId] = []
-    map[t.parentId].push(t)
-  }
-
-  return map
-})
-
 //messages
 const showMsg = ref(false)
 const msgType = ref<'success' | 'error' | 'cancel'>('success')
@@ -160,7 +148,7 @@ function openMessage(type: typeof msgType.value,text: string) {
       @close="closeModal"
     />
   
-    <Filters :all-filters="filters" :current-filter-value="filter" @update-filter="setFilter"/>
+    <Filters :all-filters="filters" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
 
     <p v-if="filteredMainTasks.length === 0" class="empty-state"> 
       No tasks for today!  
@@ -172,7 +160,7 @@ function openMessage(type: typeof msgType.value,text: string) {
 
       :key="task.id" 
       :task="task" 
-      :subTasks="subTasksMap[task.id] || []"  
+      :subTasks="store.subTasksMap[task.id] || []"  
 
       @done="markAsDone" 
       @delete="removeTask" 
@@ -293,4 +281,5 @@ function openMessage(type: typeof msgType.value,text: string) {
   font-size: 1.2rem;
   font-weight: 500;
 }
+
 </style>

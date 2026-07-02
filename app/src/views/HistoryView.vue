@@ -2,16 +2,14 @@
 import { computed, ref } from 'vue'
 import { useHistoryStore } from '../stores/history'
 import type { Activity, ActivityType } from '../types/history'
-import { useTasksStore } from '../stores/tasks'
 import { History, PlusCircle, CheckCircle2, Trash2, RotateCcw, CalendarClock, ListChecks } from 'lucide-vue-next'
 import Filters from '../components/Filters.vue'
+import { formatTime, formatDate } from '../utils/formats.ts'
+import type { Filter } from '../types/filter.ts'
 
 const historyStore = useHistoryStore()
-const tasksStore = useTasksStore()
 
-const filter = ref<'all' | ActivityType>('all')
-const filterOptions: { value: 'all' | ActivityType; label: string }[] = [
-  { value: 'all', label: 'All' },
+const filterOptions: Filter[] = [
   { value: 'task_created', label: 'Created' },
   { value: 'task_completed', label: 'Completed' },
   { value: 'task_removed', label: 'Removed' },
@@ -19,13 +17,37 @@ const filterOptions: { value: 'all' | ActivityType; label: string }[] = [
   { value: 'deadline_changed', label: 'Deadline Changed' }
 ]
 
-function setFilter(value: 'all' | ActivityType) {
-  filter.value = value
+const currentFilterValues = ref<string[]>(['all'])
+
+function handleFilterClicked(value: string) {
+  if (value === 'all') {
+    currentFilterValues.value = ['all']
+    return
+  }
+  const index = currentFilterValues.value.indexOf(value)
+  
+  if(index < 0){
+    const indexAll = currentFilterValues.value.indexOf('all')
+    if(indexAll >= 0){
+      currentFilterValues.value.splice(indexAll,1)
+    }
+    currentFilterValues.value.push(value)
+  } else {
+      currentFilterValues.value.splice(index,1)
+      if(currentFilterValues.value.length === 0) currentFilterValues.value.push('all')
+  }
 }
 
 const filteredHistory = computed(() => {
-  if (filter.value === 'all') return historyStore.history
-  return historyStore.history.filter(a => a.type === filter.value)
+  const filters = currentFilterValues.value
+
+  if (filters.includes('all')) {
+    return historyStore.history
+  }
+
+  return historyStore.history.filter(activity =>
+    filters.includes(activity.type)
+  )
 })
 
 const groupedHistory = computed(() => {
@@ -37,13 +59,6 @@ const groupedHistory = computed(() => {
   }
   return groups
 })
-
-
-function getMainTaskName(mainTaskId?: number): string | null {
-  if (mainTaskId === undefined) return null
-  const mainTask = tasksStore.tasks.find(t => t.id === mainTaskId)
-  return mainTask ? mainTask.title : null
-}
 
 function getIcon(type: ActivityType) {
   switch (type) {
@@ -63,67 +78,35 @@ function getIcon(type: ActivityType) {
 }
 
 function getLabel(activity: Activity): string {
-  const mainTaskName = getMainTaskName(activity.mainTaskId)
-
   switch (activity.type) {
     case 'task_created':
-      return mainTaskName 
-            ? `Created subtask "${activity.taskName}" in main task "${mainTaskName}"` 
+      return activity.mainTaskName 
+            ? `Created subtask "${activity.taskName}" in main task "${activity.mainTaskName}"` 
             :`Created task "${activity.taskName}"`
 
     case 'task_completed': 
-      return mainTaskName
-            ? `Completed subtask "${activity.taskName}" in main task  "${mainTaskName}"`
+      return activity.mainTaskName
+            ? `Completed subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
             : `Completed task "${activity.taskName}"`
 
     case 'task_removed':
-      return mainTaskName
-            ? `Removed subtask "${activity.taskName}" in main task  "${mainTaskName}"`
+      return activity.mainTaskName
+            ? `Removed subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
             : `Removed task "${activity.taskName}"`
 
     case 'task_undone':
-      return mainTaskName
-            ? `Reopened subtask "${activity.taskName}" in main task  "${mainTaskName}"`
+      return activity.mainTaskName
+            ? `Reopened subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
             : `Reopened task "${activity.taskName}"`
 
     case 'deadline_changed':
-      return mainTaskName 
-              ? `Changed deadline for subtask "${activity.taskName}" in task ${mainTaskName}`
+      return activity.mainTaskName 
+              ? `Changed deadline for subtask "${activity.taskName}" in task ${activity.mainTaskName}`
               : `Changed deadline for task "${activity.taskName}"`
 
     default:
       return activity.taskName
   }
-}
-
-function formatDate(date: string): string {
-  const inputDate = new Date(date)
-  const today = new Date()
-
-  today.setHours(0, 0, 0, 0)
-  inputDate.setHours(0, 0, 0, 0)
-
-  const diffDays = Math.floor((today.getTime() - inputDate.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-
-  if (diffDays <= 7) return 'Last week'
-  if (diffDays <= 30) return 'Last month'
-  if (diffDays <= 365) return 'Last year'
-
-  return inputDate.toLocaleDateString('en-US', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-function formatTime(date: string): string {
-  return new Date(date).toLocaleTimeString('pt-PT', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
 }
 </script>
 
@@ -138,7 +121,7 @@ function formatTime(date: string): string {
       </button>
     </div>
 
-    <Filters :all-filters="filterOptions" :current-filter-value="filter" @update-filter="setFilter"/>
+    <Filters  :all-filters="filterOptions" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
   
     <div v-if="filteredHistory.length === 0" class="empty-state">
       <History :size="40" />

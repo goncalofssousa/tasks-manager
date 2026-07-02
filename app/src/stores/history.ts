@@ -7,13 +7,13 @@ export const useHistoryStore = defineStore('history', {
   }),
 
   actions: {
-    addActivity(type: ActivityType, taskId: number, taskName: string, mainTaskId?: number) {
+    addActivity(type: ActivityType, taskId: number, taskName: string, mainTaskName?: string) {
       const activity = {
         id: Date.now(),
         type: type,
         taskId: taskId,
+        mainTaskName: mainTaskName,
         taskName: taskName,
-        mainTaskId: mainTaskId,
         date: new Date().toISOString()
       }
       this.history.unshift(activity)
