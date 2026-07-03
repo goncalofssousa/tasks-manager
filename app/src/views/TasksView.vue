@@ -8,6 +8,7 @@ import type { Filter } from '../types/filter.ts'
 import Filters from '../components/Filters.vue'
 import type { Task } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 
 const store = useTasksStore()
@@ -42,25 +43,20 @@ const filteredMainTasks = computed(() => {
     })
 })
 
-
-// Modals and actions 
-const showModal = ref(false)
-const mode = ref<'create' | 'edit' | 'new-sub-task'>('create')
-const editingTask = ref<Task | null>(null)
-const mainTaskId = ref<number | null>(null)
+// actions 
 
 function newTask(){
   editingTask.value = null 
   mainTaskId.value = null
   mode.value = 'create'
-  showModal.value = true
+  showTaskModal.value = true
 }
 
 function addSubTask(taskId: number){
   editingTask.value = null
   mode.value = 'new-sub-task'
   mainTaskId.value = taskId
-  showModal.value = true
+  showTaskModal.value = true
 }
 
 function editTask(task: Task){
@@ -68,7 +64,7 @@ function editTask(task: Task){
   editingTask.value = task
   mode.value = 'edit'
   mainTaskId.value = null
-  showModal.value = true
+  showTaskModal.value = true
 }
 
 function markAsDone(id: number){
@@ -82,9 +78,16 @@ function markAsUnDone(id: number){
 } 
 
 function removeTask(id: number){
-  store.removeTask(id)
-  openMessage('success', 'Task removed sucessfully')
+  taskToRemove.value = id
+  showConfirmModal.value = true
 } 
+
+
+// TaskModal
+const showTaskModal = ref<boolean>(false)
+const mode = ref<'create' | 'edit' | 'new-sub-task'>('create')
+const editingTask = ref<Task | null>(null)
+const mainTaskId = ref<number | null>(null)
 
 function handleSubmit(task: {
                         title: string, 
@@ -99,14 +102,32 @@ function handleSubmit(task: {
     store.addTask(task.title, task.descricao, task.dueDate, task.parentId)
     openMessage('success', `Task ${task.title} added sucessfully`)
   }
-  closeModal()
+  closeTaskModal()
 }
 
-function closeModal(){
+function closeTaskModal(){
   mode.value = 'create'
   editingTask.value = null
-  showModal.value = false
+  showTaskModal.value = false
 }
+
+// ConfirmModal
+const showConfirmModal = ref<boolean>(false)
+const taskToRemove = ref<number | null>(null)
+
+function closeConfirmModal(){
+  taskToRemove.value = null
+  showConfirmModal.value = false
+}
+
+function confirmDeleteTask(){
+  if(!taskToRemove.value) return
+  store.removeTask(taskToRemove.value)
+  closeConfirmModal()
+  openMessage('success', 'Task removed sucessfully')
+}
+
+
 //messages
 const showMsg = ref(false)
 const msgType = ref<'success' | 'error' | 'cancel'>('success')
@@ -140,12 +161,12 @@ function openMessage(type: typeof msgType.value,text: string) {
     </div>
 
     <TaskModal 
-      :show="showModal" 
+      :show="showTaskModal" 
       :mode="mode" 
       :task="editingTask !== null ? editingTask : undefined"   
       :main-task-id="mainTaskId !== null ? mainTaskId : undefined"
       @submit="handleSubmit"    
-      @close="closeModal"
+      @close="closeTaskModal"
     />
   
     <Filters :all-filters="filters" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
@@ -171,6 +192,7 @@ function openMessage(type: typeof msgType.value,text: string) {
     />
     
     <Message :show="showMsg" :type="msgType" :msg="msgText" @close="showMsg = false"/>
+    <ConfirmModal :show="showConfirmModal" :title="'Delete task'" @cancel="closeConfirmModal" @confirm="confirmDeleteTask" />
 
   </div>
 </template>
