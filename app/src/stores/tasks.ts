@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { useHistoryStore } from './history'
 import type { Task } from '../types/tasks'
-import { compareTasks } from '../utils/taskUtils'
+import { compareTasks, toDate } from '../utils/taskUtils'
 
 export type TasksState = {
   ids: number[], 
@@ -45,23 +45,35 @@ export const useTasksStore = defineStore('tasks', {
   },
 
   actions: {
-    addTask(title: string, text: string, date: string, parentId?: number) { 
+    addTask(title: string, text: string, date: string, parentId?: number) {
+      if (parentId !== undefined) {
+        const parentTask = this.entities[parentId]
+
+        if (parentTask?.dueDate && date === '') {
+          date = parentTask.dueDate
+        }
+      }
+
       const task = {
         id: Date.now(),
-        title: title,
+        title,
         descricao: text,
         done: false,
         dueDate: date,
-        parentId: parentId
+        parentId
       }
 
       this.ids.push(task.id)
       this.entities[task.id] = task
-      
+
       const historyStore = useHistoryStore()
-      if(parentId === null || parentId === undefined) historyStore.addActivity("task_created", task.id, task.title)
-      else historyStore.addActivity("task_created", task.id, task.title, this.entities[parentId].title)
-    },  
+
+      if (parentId === undefined) {
+        historyStore.addActivity("task_created",task.id,task.title)
+      } else {
+        historyStore.addActivity("task_created",task.id,task.title,this.entities[parentId].title)
+      }
+    },
 
     removeTask(id: number) {
       const historyStore = useHistoryStore()
@@ -101,20 +113,51 @@ export const useTasksStore = defineStore('tasks', {
         title: string
         descricao: string
         dueDate: string
-    }) {
-        const task = this.entities[id]
-        if (!task) return
+      }
+    ) {
+      const task = this.entities[id]
+      if (!task) return
 
-        const historyStore = useHistoryStore()
+      const historyStore = useHistoryStore()
 
-        task.title = updatedData.title
-        task.descricao = updatedData.descricao
+      const oldDate = toDate(task.dueDate)
+      const newDate = toDate(updatedData.dueDate)
 
-        if(task.dueDate !== updatedData.dueDate){
-          if(task.parentId !== undefined) historyStore.addActivity("deadline_changed", task.id, task.title, this.entities[task.parentId].title)
-          else historyStore.addActivity("deadline_changed", task.id, task.title)
+      if (task.parentId !== undefined) {
+        const parentTask = this.entities[task.parentId]
+        const parentDate = toDate(parentTask?.dueDate)
+
+        if (parentDate && newDate && newDate > parentDate) {
+          throw new Error(
+            'Subtask due date cannot exceed parent task'
+          )
         }
-        task.dueDate = updatedData.dueDate
+      }
+
+      task.title = updatedData.title
+      task.descricao = updatedData.descricao
+
+      if (task.dueDate !== updatedData.dueDate) {
+        if (task.parentId === undefined && newDate && (!oldDate || newDate < oldDate)) {
+          const subTasks = this.subTasksMap[id] || []
+
+          for (const subTask of subTasks) {
+            const subDate = toDate(subTask.dueDate)
+
+            if (!subDate || subDate > newDate) {
+              subTask.dueDate = updatedData.dueDate
+            }
+          }
+        }
+
+        if (task.parentId !== undefined) {
+          historyStore.addActivity("deadline_changed",task.id,task.title,this.entities[task.parentId].title)
+        } else {
+          historyStore.addActivity("deadline_changed",task.id,task.title)
+        }
+      }
+
+      task.dueDate = updatedData.dueDate
     },
 
     markAsDone(id: number) {
@@ -136,8 +179,6 @@ export const useTasksStore = defineStore('tasks', {
             subTask.doneDate = task.doneDate
           } 
         }
-
-        this.ids.filter(taskId => this.entities[taskId])
 
         historyStore.addActivity("task_completed", task.id, task.title)
       }

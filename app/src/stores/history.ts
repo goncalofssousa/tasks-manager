@@ -19,8 +19,12 @@ export const useHistoryStore = defineStore('history', {
       this.history.unshift(activity)
     },  
 
-    clearHistory(){
-      this.history.splice(0, this.history.length)
+    clearFilteredHistory(typesFiltered: string[]){
+      this.history = this.history.filter(activity => !typesFiltered.includes(activity.type))
+    },
+
+    clearAllHistory(){
+      this.history = []
     }
   }
 })

@@ -6,3 +6,6 @@ export function  compareTasks(a: Task, b: Task) {
     return new Date(a.dueDate ?? '').getTime() - new Date(b.dueDate ?? '').getTime()
 }
 
+export function toDate(date?: string) {
+  return date ? new Date(date) : null
+}

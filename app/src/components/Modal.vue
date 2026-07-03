@@ -44,7 +44,7 @@ defineEmits(['close'])
 
 @media (max-width: 600px) {
   .modal {
-    max-width: 80%;
+    max-width: 320px;
   }
 }
 </style>

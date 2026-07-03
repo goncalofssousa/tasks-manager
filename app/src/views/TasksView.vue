@@ -163,7 +163,7 @@ function openMessage(type: typeof msgType.value,text: string) {
       :task="task" 
       :subTasks="store.subTasksMap[task.id] || []"  
 
-      @done="markAsDone" 
+      @done="markAsDone"   
       @delete="removeTask" 
       @edit="editTask" 
       @undone="markAsUnDone"

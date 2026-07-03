@@ -2,7 +2,9 @@
 import { ref, watch, computed } from 'vue'
 import Modal from '../components/Modal.vue'
 import type { Task } from '../types/tasks.ts'
+import { useTasksStore } from '../stores/tasks.ts';
 
+const tasksStore = useTasksStore()
 
 const props = defineProps<{
   show: boolean
@@ -16,9 +18,9 @@ const emit = defineEmits<{
   (e: 'submit', payload: { title: string; descricao: string; dueDate: string, parentId?: number }): void
 }>()
 
-const title = ref('')
-const descricao = ref('')
-const dueDate = ref('')
+const title = ref<string>('')
+const descricao = ref<string>('')
+const dueDate = ref<string>('')
 
 const modalTitle = ref('')
 const modalSubmitButtonText = ref('')
@@ -51,8 +53,33 @@ watch(() => props.show, (open) => {
 )
 
 const canSend = computed(() => {
-  return title.value.trim() !== '' 
+  return (title.value.trim() !== '' && dueDateError.value === '')
 })
+
+const dueDateError = computed(() => {
+  let parentId: number | undefined
+
+  if (props.mode === 'new-sub-task') {
+    parentId = props.mainTaskId
+  }
+
+  if (props.mode === 'edit') {
+    parentId = props.task?.parentId
+  }
+
+  if (!parentId || !dueDate.value) {
+    return ''
+  }
+
+  const parentDueDate = tasksStore.entities[parentId]?.dueDate
+
+  if (parentDueDate && new Date(dueDate.value) > new Date(parentDueDate)) {
+    return `Sub-task due date cannot exceed ${parentDueDate}`
+  }
+
+  return ''
+})
+
 
 function submit() {
   if (!canSend.value) return
@@ -75,7 +102,10 @@ function submit() {
     <form class="task-form" @submit.prevent="submit">
 
       <div class="form-group">
-        <label for="title">Title</label>
+        <label for="title">
+          Title 
+          <span class="required-badge">Required</span>
+        </label>
         <input id="title" v-model="title" placeholder="Task title..." />
       </div>
 
@@ -86,7 +116,15 @@ function submit() {
 
       <div class="form-group">
         <label for="date" >Due Date</label>
-        <input id="date" type="date" v-model="dueDate" />
+        <input 
+          id="date" type="date" v-model="dueDate" :class="{ error: dueDateError !== '' }"
+          :max="props.mainTaskId ? tasksStore.entities[props.mainTaskId]?.dueDate 
+                : props.task?.parentId ? tasksStore.entities[props.task.parentId]?.dueDate
+                : undefined"
+        />
+        <p v-if="dueDateError" class="error-text">
+          {{ dueDateError }}
+        </p>
       </div>
 
       <div class="modal-actions">
@@ -157,6 +195,28 @@ function submit() {
 .form-group input::placeholder,
 .form-group textarea::placeholder {
   color: var(--color-text-secondary);
+}
+
+.required-badge {
+  font-size: .7rem;
+  padding: 2px 6px;
+
+  border-radius: 999px;
+
+  background: rgba(121,111,246,.15);
+  color: var(--color-accent);
+
+  font-weight: 500;
+}
+
+#date.error {
+  border: 1px solid #ff4d4f;
+}
+
+.error-text {
+  margin-top: 5px;
+  font-size: 0.8rem;
+  color: #ff4d4f;
 }
 
 /* buttons */

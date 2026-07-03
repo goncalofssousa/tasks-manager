@@ -6,9 +6,12 @@ import { History, PlusCircle, CheckCircle2, Trash2, RotateCcw, CalendarClock, Li
 import Filters from '../components/Filters.vue'
 import { formatTime, formatDate } from '../utils/formats.ts'
 import type { Filter } from '../types/filter.ts'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 const historyStore = useHistoryStore()
 
+
+// filters
 const filterOptions: Filter[] = [
   { value: 'task_created', label: 'Created' },
   { value: 'task_completed', label: 'Completed' },
@@ -38,6 +41,7 @@ function handleFilterClicked(value: string) {
   }
 }
 
+// History ti dusplay
 const filteredHistory = computed(() => {
   const filters = currentFilterValues.value
 
@@ -45,11 +49,10 @@ const filteredHistory = computed(() => {
     return historyStore.history
   }
 
-  return historyStore.history.filter(activity =>
-    filters.includes(activity.type)
-  )
+  return historyStore.history.filter(activity => filters.includes(activity.type))
 })
 
+// griouping history by day 
 const groupedHistory = computed(() => {
   const groups: Record<string, Activity[]> = {}
   for (const activity of filteredHistory.value) {
@@ -108,6 +111,24 @@ function getLabel(activity: Activity): string {
       return activity.taskName
   }
 }
+
+function handleClearClick(){
+  showModal.value = true; 
+}
+
+const showModal = ref<boolean>(false)
+
+function closeModal(){
+  showModal.value = false; 
+}
+
+function handleConfirm(){
+  if(currentFilterValues.value.at(0) === 'all') historyStore.clearAllHistory()
+  else {
+    historyStore.clearFilteredHistory(currentFilterValues.value)
+  }
+  closeModal()
+}
 </script>
 
 <template>
@@ -115,9 +136,9 @@ function getLabel(activity: Activity): string {
 
     <div class="header">
       <h1>History</h1>
-      <button class="clear-btn" @click="historyStore.clearHistory()">
+      <button  class="clear-btn" @click="handleClearClick" :disabled="filteredHistory.length === 0">
         <Trash2 :size="16" />
-        Clear
+        Clear {{ currentFilterValues.find(t => t === 'all') ? 'All' : `Filtered (${filteredHistory.length})` }}
       </button>
     </div>
 
@@ -148,6 +169,8 @@ function getLabel(activity: Activity): string {
 
       </div>
     </div>
+
+    <ConfirmModal :show="showModal" :title="'Clear History'" @cancel="closeModal" @confirm="handleConfirm"/>
 
   </div>
 </template>
@@ -201,6 +224,23 @@ function getLabel(activity: Activity): string {
 .clear-btn:active {
   transform: scale(0.97);
 } 
+
+.clear-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.08);
+
+  color: var(--color-text-secondary);
+}
+
+.clear-btn:disabled:hover {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.08);
+
+  transform: none;
+}
 
 .empty-state {
   display: flex;
