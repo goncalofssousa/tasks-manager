@@ -22,35 +22,46 @@ const title = ref<string>('')
 const descricao = ref<string>('')
 const dueDate = ref<string>('')
 
-const modalTitle = ref('')
-const modalSubmitButtonText = ref('')
+const modalConfig = {
+  create: {
+    title: 'New Task',
+    button: 'Add Task'
+  },
+
+  edit: {
+    title: 'Edit Task',
+    button: 'Save Changes'
+  },
+
+  'new-sub-task': {
+    title: 'New Sub Task',
+    button: 'Add Sub Task'
+  }
+}
+
+const modalTitle = computed(
+  () => modalConfig[props.mode].title
+)
+
+const modalSubmitButtonText = computed(
+  () => modalConfig[props.mode].button
+)
+
 
 watch(() => props.show, (open) => {
-    if (open &&  props.mode === 'edit' && props.task) {
-      title.value = props.task.title
-      descricao.value = props.task.descricao ?? ''
-      dueDate.value = props.task.dueDate ?? ''
-      modalTitle.value = 'Edit Task'
-      modalSubmitButtonText.value = 'Save Changes'
-    }
+  if (!open) return
 
-    if (open && props.mode === 'create') {
-      title.value = ''
-      descricao.value = ''
-      dueDate.value = ''
-      modalTitle.value = 'New Task'
-      modalSubmitButtonText.value = 'Add Task'
-    }
-
-    if (open && props.mode === 'new-sub-task' && props.mainTaskId){
-      title.value = ''
-      descricao.value = ''
-      dueDate.value = ''
-      modalTitle.value = 'New Sub Task'
-      modalSubmitButtonText.value = 'Add Sub Task'
-    }
+  if (props.mode === 'edit' && props.task) {
+    title.value = props.task.title
+    descricao.value = props.task.descricao ?? ''
+    dueDate.value = props.task.dueDate ?? ''
+    return
   }
-)
+
+  title.value = ''
+  descricao.value = ''
+  dueDate.value = ''
+})
 
 const canSend = computed(() => {
   return (title.value.trim() !== '' && dueDateError.value === '')
@@ -93,7 +104,7 @@ function submit() {
 </script>
 
 <template>
-  <Modal :show="show" @close="$emit('close')">
+  <Modal :show="show">
 
     <h2>
       {{ modalTitle }}

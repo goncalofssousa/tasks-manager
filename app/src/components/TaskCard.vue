@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { Check, Pencil, Trash2, Calendar, RotateCcw, ChevronDown } from 'lucide-vue-next'
 import SubTaskCard from './SubTaskCard.vue'
 import { useTaskState } from '../composables/useTaskState.ts'
+import '../styles/task-ui.css'
 
 const props = defineProps<{
   task: Task
@@ -163,13 +164,6 @@ function toggleSubTasks(){
 }
 
 
-.warning {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-}
-
 /* PROGRESS */
 .progress-wrapper {
   margin-top: 6px;
@@ -251,30 +245,5 @@ function toggleSubTasks(){
   flex-direction: row;
   align-items: center;
   gap: 6px;
-}
-
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.add-subtask {
-  background: rgba(121, 111, 246, .1);
-  color: var(--color-accent);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 0;
-  padding-bottom: 2px; /* Pequeno ajuste ótico para o caractere '+' ficar perfeitamente centrado */
-}
-
-.add-subtask:hover {
-  background: rgba(121, 111, 246, .2);
 }
 </style>

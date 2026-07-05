@@ -7,9 +7,13 @@ import Filters from '../components/Filters.vue'
 import { formatTime, formatDate } from '../utils/formats.ts'
 import type { Filter } from '../types/filter.ts'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import { useMessage } from '../composables/useMessage.ts'
+import Message from '../components/Message.vue'
+import '../styles/empty-state.css'
 
 const historyStore = useHistoryStore()
 
+const {show, text, type, openMessage} = useMessage()
 
 // filters
 const filterOptions: Filter[] = [
@@ -128,6 +132,7 @@ function handleConfirm(){
     historyStore.clearFilteredHistory(currentFilterValues.value)
   }
   closeModal()
+  openMessage("success", "History cleared sucessfully")
 }
 </script>
 
@@ -171,7 +176,7 @@ function handleConfirm(){
     </div>
 
     <ConfirmModal :show="showModal" :title="'Clear History'" @cancel="closeModal" @confirm="handleConfirm"/>
-
+    <Message :show="show" :type="type" :msg="text" @close="show = false"/>
   </div>
 </template>
 
@@ -189,10 +194,6 @@ function handleConfirm(){
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.header h1 {
-  margin: 0;
 }
 
 .clear-btn {
@@ -240,23 +241,6 @@ function handleConfirm(){
   border-color: rgba(255,255,255,.08);
 
   transform: none;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-
-  margin-top: 15%;
-
-  color: var(--color-text-secondary);
-}
-
-.empty-state p {
-  font-size: 1.1rem;
-  font-weight: 500;
-  margin: 0;
 }
 
 /* TIMELINE */

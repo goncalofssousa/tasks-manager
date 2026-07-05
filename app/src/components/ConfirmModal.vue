@@ -13,7 +13,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <Modal :show="show" @close="$emit('cancel')">
+  <Modal :show="show">
     <div class="confirm-modal">
 
         <div class="confirm-icon">

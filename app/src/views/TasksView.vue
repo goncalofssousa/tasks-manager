@@ -9,9 +9,11 @@ import Filters from '../components/Filters.vue'
 import type { Task } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
-
+import { useMessage } from '../composables/useMessage.ts'
+import '../styles/empty-state.css'
 
 const store = useTasksStore()
+const {show, text, type, openMessage} = useMessage()
 
 // Filters 
 const filters: Filter[] = [
@@ -111,6 +113,11 @@ function closeTaskModal(){
   showTaskModal.value = false
 }
 
+function cancelTaskCreation(msg: string){
+  closeTaskModal()
+  openMessage("cancel", msg)
+}
+
 // ConfirmModal
 const showConfirmModal = ref<boolean>(false)
 const taskToRemove = ref<number | null>(null)
@@ -120,25 +127,16 @@ function closeConfirmModal(){
   showConfirmModal.value = false
 }
 
+function cancelOperation(msg: string){
+  closeConfirmModal()
+  openMessage("cancel", msg)
+}
+
 function confirmDeleteTask(){
   if(!taskToRemove.value) return
   store.removeTask(taskToRemove.value)
   closeConfirmModal()
   openMessage('success', 'Task removed sucessfully')
-}
-
-
-//messages
-const showMsg = ref(false)
-const msgType = ref<'success' | 'error' | 'cancel'>('success')
-const msgText = ref('')
-
-function openMessage(type: typeof msgType.value,text: string) {
-  msgType.value = type
-  msgText.value = text
-  showMsg.value = true
-
-  setTimeout(() => {showMsg.value = false}, 2500)
 }
 </script>
 
@@ -166,7 +164,7 @@ function openMessage(type: typeof msgType.value,text: string) {
       :task="editingTask !== null ? editingTask : undefined"   
       :main-task-id="mainTaskId !== null ? mainTaskId : undefined"
       @submit="handleSubmit"    
-      @close="closeTaskModal"
+      @close="cancelTaskCreation('Task creation cancelled')"
     />
   
     <Filters :all-filters="filters" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
@@ -191,8 +189,8 @@ function openMessage(type: typeof msgType.value,text: string) {
       @add-sub-task="addSubTask"
     />
     
-    <Message :show="showMsg" :type="msgType" :msg="msgText" @close="showMsg = false"/>
-    <ConfirmModal :show="showConfirmModal" :title="'Delete task'" @cancel="closeConfirmModal" @confirm="confirmDeleteTask" />
+    <Message :show="show" :type="type" :msg="text" @close="show = false"/>
+    <ConfirmModal :show="showConfirmModal" :title="'Delete task'" @cancel="cancelOperation('Task delete operation cancelled')" @confirm="confirmDeleteTask" />
 
   </div>
 </template>
@@ -210,10 +208,6 @@ function openMessage(type: typeof msgType.value,text: string) {
   justify-content: space-between;
 
   margin-bottom: 10px;
-}
-
-.header h1 {
-  margin: 0;
 }
 
 /* ADD BUTTON */
@@ -300,22 +294,6 @@ function openMessage(type: typeof msgType.value,text: string) {
   opacity: .8;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-
-  margin-top: 10%;
-
-  color: var(--color-text-secondary);
-}
-
-.empty-state p {
-  font-size: 1.1rem;
-  font-weight: 500;
-  margin: 0;
-}
 
 @media (max-width: 480px) {
   .search-bar {

@@ -2,12 +2,10 @@
 defineProps<{
   show: boolean
 }>()
-
-defineEmits(['close'])
 </script>
 
 <template>
-  <div v-if="show" class="overlay" @click.self="$emit('close')">
+  <div v-if="show" class="overlay">
     <div class="modal">
       <slot />
     </div>

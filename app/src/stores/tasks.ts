@@ -3,13 +3,13 @@ import { useHistoryStore } from './history'
 import type { Task } from '../types/tasks'
 import { compareTasks, toDate } from '../utils/taskUtils'
 
-export type TasksState = {
+export type TasksData = {
   ids: number[], 
   entities: Record<number, Task>
 }
 
 export const useTasksStore = defineStore('tasks', {
-  state: (): TasksState => ({
+  state: (): TasksData => ({
     ids: [], 
     entities: {}
   }),
