@@ -27,13 +27,21 @@ const progress = computed(() =>
     : (completedSubTasks.value / props.subTasks.length) * 100
 )
 
+const priorityClass = computed(() => {
+  if(props.task.done) return 'completed'
+  if(props.task.priority) return`priority-${props.task.priority.toLowerCase()}` 
+  return ''
+
+}
+)
+
 function toggleSubTasks(){
   showSubTasks.value = !showSubTasks.value
 }
 </script>
 
 <template>
-  <div class="card" :class="{ completed: task.done }">
+  <div class="card" :class="[{ completed: task.done }, priorityClass]">
     <div class="header">
       <h3 class="title">{{ task.title }}</h3>
 
@@ -81,6 +89,10 @@ function toggleSubTasks(){
         ⚠ Task due today
       </div>
     </div>
+
+    <span v-if="task.priority" class="priority-badge" :class="priorityClass">
+      {{ task.priority }}
+    </span>
 
     <div v-if="subTasks.length" class="progress-wrapper">
       <div class="progress-header">
@@ -131,6 +143,8 @@ function toggleSubTasks(){
 
 .card.completed {
   opacity: .6;
+  border-left: 3px solid #34d399;
+  box-shadow: -2px 0 14px -6px rgba(52, 211, 153, .35);
 }
 
 .header {
@@ -245,5 +259,51 @@ function toggleSubTasks(){
   flex-direction: row;
   align-items: center;
   gap: 6px;
+}
+
+/* PRIORITY */
+.card.priority-high {
+  border-left: 3px solid #f87171;
+  box-shadow: -2px 0 14px -6px rgba(248, 113, 113, .35);
+}
+
+.card.priority-medium {
+  border-left: 3px solid #fbbf24;
+  box-shadow: -2px 0 14px -6px rgba(251, 191, 36, .35);
+}
+
+.card.priority-low {
+  border-left: 3px solid #60a5fa;
+  box-shadow: -2px 0 14px -6px rgba(96, 165, 250, .35);
+}
+
+.priority-badge {
+  font-size: .68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 2px 9px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.priority-badge.priority-high {
+  color: #f87171;
+  background: rgba(248, 113, 113, .12);
+}
+
+.priority-badge.priority-medium {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, .12);
+}
+
+.priority-badge.priority-low {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, .12);
+}
+
+.priority-badge.completed {
+  color: #34d399;
+  background: rgba(52, 211, 153, .12);
 }
 </style>

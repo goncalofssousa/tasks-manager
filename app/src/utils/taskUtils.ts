@@ -1,9 +1,20 @@
 import type { Task } from "../types/tasks"
 
-export function  compareTasks(a: Task, b: Task) {
-    if(a.dueDate !== '' && b.dueDate === '') return -1; 
-    if(a.dueDate === '' && b.dueDate !== '') return 1; 
-    return new Date(a.dueDate ?? '').getTime() - new Date(b.dueDate ?? '').getTime()
+const priorityRank: Record<string, number> = {
+  High: 3,
+  Medium: 2,
+  Low: 1,
+}
+
+export function compareTasks(a: Task, b: Task) {
+  const aPriority = priorityRank[a.priority ?? ''] ?? 0
+  const bPriority = priorityRank[b.priority ?? ''] ?? 0
+
+  if (aPriority !== bPriority) return bPriority - aPriority
+
+  if(a.dueDate !== '' && b.dueDate === '') return -1; 
+  if(a.dueDate === '' && b.dueDate !== '') return 1; 
+  return new Date(a.dueDate ?? '').getTime() - new Date(b.dueDate ?? '').getTime()
 }
 
 export function toDate(date?: string) {

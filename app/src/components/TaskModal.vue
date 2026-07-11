@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import Modal from '../components/Modal.vue'
-import type { Task } from '../types/tasks.ts'
+import type { Priority, Task } from '../types/tasks.ts'
 import { useTasksStore } from '../stores/tasks.ts';
 
 const tasksStore = useTasksStore()
@@ -15,12 +15,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'submit', payload: { title: string; descricao: string; dueDate: string, parentId?: number }): void
+  (e: 'submit', payload: { title: string; descricao: string; dueDate: string, parentId?: number, priority: Priority | undefined }): void
 }>()
 
 const title = ref<string>('')
 const descricao = ref<string>('')
 const dueDate = ref<string>('')
+const priority = ref<Priority | undefined>(undefined)
 
 const modalConfig = {
   create: {
@@ -55,12 +56,14 @@ watch(() => props.show, (open) => {
     title.value = props.task.title
     descricao.value = props.task.descricao ?? ''
     dueDate.value = props.task.dueDate ?? ''
+    priority.value = props.task.priority ?? undefined
     return
   }
 
   title.value = ''
   descricao.value = ''
   dueDate.value = ''
+  priority.value = undefined
 })
 
 const canSend = computed(() => {
@@ -98,7 +101,8 @@ function submit() {
     title: title.value,
     descricao: descricao.value,
     dueDate: dueDate.value,
-    parentId: props.mainTaskId
+    parentId: props.mainTaskId,
+    priority: priority.value
   })
 }
 </script>
@@ -136,6 +140,16 @@ function submit() {
         <p v-if="dueDateError" class="error-text">
           {{ dueDateError }}
         </p>
+      </div>
+
+      <div class="form-group">
+        <label>Priority</label>
+        <div class="priority-picker">
+          <label v-for="option in ['Low', 'Medium', 'High']" :key="option" class="priority-option" :class="[option, { active: priority === option }]">
+            <input type="radio" name="priority" :value="option" :checked="priority === option" @click="priority = priority === option ? undefined : option" />
+            {{ option }}
+          </label>  
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -227,6 +241,62 @@ function submit() {
 .error-text {
   margin-top: 5px;
   font-size: 0.8rem;
+  color: #ff4d4f;
+}
+
+/* priority picker */
+.priority-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.priority-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 10px 8px;
+
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+
+  background: var(--color-primary);
+  color: var(--color-text-secondary);
+
+  font-size: .85rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.priority-option input {
+  display: none;
+}
+
+.priority-option:hover {
+  color: white;
+}
+
+.priority-option.active {
+  background: rgba(121, 111, 246, .15);
+  border-color: rgba(121, 111, 246, .5);
+  color: var(--color-accent);
+}
+
+.priority-option.low.active {
+  background: rgba(52, 199, 89, .2);
+  color: #34c759;
+}
+
+.priority-option.medium.active {
+  background: rgba(255, 159, 10, .2);
+  color: #ff9f0a;
+}
+
+.priority-option.high.active {
+  background: rgba(255, 77, 79, .2);
   color: #ff4d4f;
 }
 

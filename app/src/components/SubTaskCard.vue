@@ -3,6 +3,7 @@ import type { Task } from '../types/tasks.ts'
 import { Check, Pencil, Trash2, Calendar, RotateCcw } from 'lucide-vue-next'
 import { useTaskState } from '../composables/useTaskState.ts'
 import '../styles/task-ui.css'
+import { computed } from 'vue';
 
 const props = defineProps<{
   subTask: Task
@@ -11,11 +12,14 @@ const props = defineProps<{
 defineEmits(['done', 'undone', 'edit', 'delete'])
 
 const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
+
+const priorityClass = computed(() =>
+  props.subTask.priority && !props.subTask.done ? `priority-${props.subTask.priority.toLowerCase()}` : ''
+)
 </script>
 
 <template>
-  <div class="subtask" :class="{ completed: subTask.done }">
-
+  <div class="subtask" :class="[{ completed: subTask.done }, priorityClass]">
     <div class="subtask-header">
 
       <p class="subtask-title">
@@ -65,7 +69,9 @@ const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
         ⚠ Task due today
       </div>
     </div>
-
+    <span v-if="subTask.priority" class="priority-badge" :class="priorityClass">
+      {{ subTask.priority }}
+    </span>
   </div>
 </template>
 
@@ -117,4 +123,41 @@ const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
   gap: 5px;
   flex-shrink: 0;
 } 
+
+.subtask.priority-high {
+  border-left: 2px solid #f87171;
+}
+
+.subtask.priority-medium {
+  border-left: 2px solid #fbbf24;
+}
+
+.subtask.priority-low {
+  border-left: 2px solid #60a5fa;
+}
+
+.priority-badge {
+  font-size: .62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 1px 8px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.priority-badge.priority-high {
+  color: #f87171;
+  background: rgba(248, 113, 113, .12);
+}
+
+.priority-badge.priority-medium {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, .12);
+}
+
+.priority-badge.priority-low {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, .12);
+}
 </style>

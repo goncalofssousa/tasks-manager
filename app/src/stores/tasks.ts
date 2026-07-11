@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { useHistoryStore } from './history'
-import type { Task } from '../types/tasks'
+import type { Priority, Task } from '../types/tasks'
 import { compareTasks, toDate } from '../utils/taskUtils'
 
 export type TasksData = {
@@ -45,7 +45,7 @@ export const useTasksStore = defineStore('tasks', {
   },
 
   actions: {
-    addTask(title: string, text: string, date: string, parentId?: number) {
+    addTask(title: string, text: string, date: string, parentId?: number, priority?: Priority) {
       if (parentId !== undefined) {
         const parentTask = this.entities[parentId]
 
@@ -60,7 +60,8 @@ export const useTasksStore = defineStore('tasks', {
         descricao: text,
         done: false,
         dueDate: date,
-        parentId
+        parentId, 
+        priority: priority
       }
 
       this.ids.push(task.id)
@@ -113,6 +114,7 @@ export const useTasksStore = defineStore('tasks', {
         title: string
         descricao: string
         dueDate: string
+        priority?: Priority
       }
     ) {
       const task = this.entities[id]
@@ -158,6 +160,7 @@ export const useTasksStore = defineStore('tasks', {
       }
 
       task.dueDate = updatedData.dueDate
+      task.priority = updatedData.priority
     },
 
     markAsDone(id: number) {

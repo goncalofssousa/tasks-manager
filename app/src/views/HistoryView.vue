@@ -8,12 +8,14 @@ import { formatTime, formatDate } from '../utils/formats.ts'
 import type { Filter } from '../types/filter.ts'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
+import { useFilter } from '../composables/useFilter.ts'
 import Message from '../components/Message.vue'
 import '../styles/empty-state.css'
 
 const historyStore = useHistoryStore()
 
 const {show, text, type, openMessage} = useMessage()
+const {currentFilterValues, handleMultipleFilterClicked} = useFilter()
 
 // filters
 const filterOptions: Filter[] = [
@@ -23,27 +25,6 @@ const filterOptions: Filter[] = [
   { value: 'task_undone', label: 'Reopened' },
   { value: 'deadline_changed', label: 'Deadline Changed' }
 ]
-
-const currentFilterValues = ref<string[]>(['all'])
-
-function handleFilterClicked(value: string) {
-  if (value === 'all') {
-    currentFilterValues.value = ['all']
-    return
-  }
-  const index = currentFilterValues.value.indexOf(value)
-  
-  if(index < 0){
-    const indexAll = currentFilterValues.value.indexOf('all')
-    if(indexAll >= 0){
-      currentFilterValues.value.splice(indexAll,1)
-    }
-    currentFilterValues.value.push(value)
-  } else {
-      currentFilterValues.value.splice(index,1)
-      if(currentFilterValues.value.length === 0) currentFilterValues.value.push('all')
-  }
-}
 
 // History ti dusplay
 const filteredHistory = computed(() => {
@@ -134,6 +115,11 @@ function handleConfirm(){
   closeModal()
   openMessage("success", "History cleared sucessfully")
 }
+
+function handleCancel(){
+  closeModal()
+  openMessage("cancel", "History clearing cancelled")
+}
 </script>
 
 <template>
@@ -147,7 +133,7 @@ function handleConfirm(){
       </button>
     </div>
 
-    <Filters  :all-filters="filterOptions" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
+    <Filters  :all-filters="filterOptions" :current-filter-values="currentFilterValues" @clicked-filter="handleMultipleFilterClicked"/>
   
     <div v-if="filteredHistory.length === 0" class="empty-state">
       <History :size="40" />
@@ -175,7 +161,7 @@ function handleConfirm(){
       </div>
     </div>
 
-    <ConfirmModal :show="showModal" :title="'Clear History'" @cancel="closeModal" @confirm="handleConfirm"/>
+    <ConfirmModal :show="showModal" :title="'Clear History'" @cancel="handleCancel" @confirm="handleConfirm"/>
     <Message :show="show" :type="type" :msg="text" @close="show = false"/>
   </div>
 </template>

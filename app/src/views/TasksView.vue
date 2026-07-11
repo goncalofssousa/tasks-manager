@@ -1,47 +1,79 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, CircleCheckBig  } from 'lucide-vue-next'
+import { Search, CircleCheckBig, FilterIcon, X, SearchX  } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
 import TaskCard from '../components/TaskCard.vue'
-import type { Filter } from '../types/filter.ts'
-import Filters from '../components/Filters.vue'
-import type { Task } from '../types/tasks.ts'
+import type { Priority, Task } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
+import { useFilter } from '../composables/useFilter.ts'
 import '../styles/empty-state.css'
+import type { Filter } from '../types/filter.ts'
+import FilterPanel from '../components/FilterPanel.vue'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
 
 // Filters 
-const filters: Filter[] = [
-  { label: 'Active', value: 'active' },
-  { label: 'Done', value: 'done' }
-]
-const search = ref('')
-const currentFilterValues = ref<string[]>(['all'])
+const showFilters = ref(false)
 
-function handleFilterClicked(value: string) {
-  currentFilterValues.value = [value]
+const filterStatus: Filter[] = [
+ {label: "Active", value: "active"}, 
+ {label: "Done", value: "done"}
+]
+
+const filterPriority: Filter[] = [
+ {label: "High", value: "High"}, 
+ {label: "Medium", value: "Medium"},
+ {label: "Low", value: "Low"}
+]
+
+const {currentFilterValues: statusFilter, handleSingleFilterClicked: handleStatusFilter} = useFilter()
+const {currentFilterValues: priorityFilter, handleSingleFilterClicked: handlePriorityFilter} = useFilter()
+
+const activeFilterChips = computed(() => {
+  const chips: { key: 'status' | 'priority', label: string }[] = []
+
+  if (statusFilter.value[0] !== 'all') {
+    const match = filterStatus.find(f => f.value === statusFilter.value[0])
+    if (match) chips.push({ key: 'status', label: match.label })
+  }
+
+  if (priorityFilter.value[0] !== 'all') {
+    const match = filterPriority.find(f => f.value === priorityFilter.value[0])
+    if (match) chips.push({ key: 'priority', label: match.label })
+  }
+
+  return chips
+})
+
+const hasActiveFilters = computed(() => activeFilterChips.value.length > 0)
+
+function removeFilterChip(key: 'status' | 'priority'){
+  if(key === 'status') handleStatusFilter('all')
+  else handlePriorityFilter('all')
 }
+
+function resetFilters(){
+  handleStatusFilter('all')
+  handlePriorityFilter('all')
+}
+
+const search = ref('')
 
 const filteredMainTasks = computed(() => {
   const searchText = search.value.toLowerCase()
 
   return store.mainTasks
     .filter(t => {
-      if (!t.title.toLowerCase().includes(searchText))
-        return false
+      if (!t.title.toLowerCase().includes(searchText)) return false
 
-      if (currentFilterValues.value.includes('active'))
-        return !t.done
-
-      if (currentFilterValues.value.includes('done'))
-        return t.done
-
-      return true
+      const matchesStatus = statusFilter.value.includes('all') || (statusFilter.value.includes('active') && !t.done) || (statusFilter.value.includes('done') && t.done)
+      const matchesPriority = priorityFilter.value.includes('all') || (t.priority && priorityFilter.value.includes(t.priority))
+      
+      return matchesStatus && matchesPriority
     })
 })
 
@@ -96,12 +128,13 @@ function handleSubmit(task: {
                         descricao: string, 
                         dueDate: string, 
                         parentId?: number
+                        priority?: Priority
                       }){
   if(mode.value === 'edit' && editingTask.value !== null){
     store.updateTask(editingTask.value.id, task)
     openMessage('success', `Task edited sucessfully`)
   } else {
-    store.addTask(task.title, task.descricao, task.dueDate, task.parentId)
+    store.addTask(task.title, task.descricao, task.dueDate, task.parentId, task.priority)
     openMessage('success', `Task ${task.title} added sucessfully`)
   }
   closeTaskModal()
@@ -156,20 +189,57 @@ function confirmDeleteTask(){
     <div class="search-bar">
       <Search class="icon-search"/>
       <input id="search" v-model="search" type="text" placeholder="Search tasks..."/>
+    </div>  
+    
+    <div class="task-toolbar">
+      <button class="filter-btn" :class="{ active: hasActiveFilters }" @click="showFilters = !showFilters">
+        <FilterIcon :size="16"/>
+        Filters
+        <span v-if="hasActiveFilters" class="filter-count">{{ activeFilterChips.length }}</span>
+      </button>
+
+      <div v-if="hasActiveFilters" class="active-chips">
+        <button
+          v-for="chip in activeFilterChips"
+          :key="chip.key"
+          class="chip"
+          @click="removeFilterChip(chip.key)"
+        >
+          {{ chip.label }}
+          <X :size="12" />
+        </button>
+
+        <button class="clear-all" @click="resetFilters">
+          Clear all
+        </button>
+      </div>
+
     </div>
 
-    <TaskModal 
-      :show="showTaskModal" 
-      :mode="mode" 
-      :task="editingTask !== null ? editingTask : undefined"   
-      :main-task-id="mainTaskId !== null ? mainTaskId : undefined"
-      @submit="handleSubmit"    
-      @close="cancelTaskCreation('Task creation cancelled')"
-    />
-  
-    <Filters :all-filters="filters" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
+    <FilterPanel
+      :show="showFilters"
 
-    <div v-if="filteredMainTasks.length === 0" class="empty-state">
+      :status-filters="filterStatus"
+      :priority-filters="filterPriority"
+
+      :status-value="statusFilter"
+      :priority-value="priorityFilter"
+
+      @close="showFilters=false"
+
+      @status-change="handleStatusFilter"
+
+      @priority-change="handlePriorityFilter"
+
+      @reset="resetFilters"
+    />
+
+    <div v-if="filteredMainTasks.length === 0 && hasActiveFilters" class="empty-state">
+      <SearchX :size="40" />
+      <p>No tasks match these filters</p>
+    </div>
+
+    <div v-else-if="filteredMainTasks.length === 0" class="empty-state"> 
       <CircleCheckBig :size="40" />
       <p>Enjoy the free time — no tasks yet</p>
     </div>
@@ -189,6 +259,14 @@ function confirmDeleteTask(){
       @add-sub-task="addSubTask"
     />
     
+    <TaskModal 
+      :show="showTaskModal" 
+      :mode="mode" 
+      :task="editingTask !== null ? editingTask : undefined"   
+      :main-task-id="mainTaskId !== null ? mainTaskId : undefined"
+      @submit="handleSubmit"    
+      @close="cancelTaskCreation('Task creation cancelled')"
+    />
     <Message :show="show" :type="type" :msg="text" @close="show = false"/>
     <ConfirmModal :show="showConfirmModal" :title="'Delete task'" @cancel="cancelOperation('Task delete operation cancelled')" @confirm="confirmDeleteTask" />
 
@@ -292,6 +370,128 @@ function confirmDeleteTask(){
 .search-bar input::placeholder {
   color: var(--color-text-secondary);
   opacity: .8;
+}
+
+.task-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  margin-bottom: 16px;
+}
+
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 14px;
+
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,.08);
+
+  background: var(--color-primary-dark);
+
+  color: var(--color-text-secondary);
+
+  font-family: Poppins, sans-serif;
+  font-size: .85rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all .2s ease;
+}
+
+
+.filter-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.filter-btn.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: rgba(121,111,246,.1);
+}
+
+.filter-btn:active {
+  transform: scale(.96);
+}
+
+.filter-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: white;
+
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.active-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(121,111,246,.3);
+
+  background: rgba(121,111,246,.1);
+  color: var(--color-accent);
+
+  font-family: Poppins, sans-serif;
+  font-size: .8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.chip:hover {
+  background: rgba(121,111,246,.18);
+}
+
+.clear-all {
+  padding: 6px 4px;
+
+  border: none;
+  background: transparent;
+
+  color: var(--color-text-secondary);
+
+  font-family: Poppins, sans-serif;
+  font-size: .8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  transition: color .2s ease;
+}
+
+.clear-all:hover {
+  color: var(--color-light);
 }
 
 
