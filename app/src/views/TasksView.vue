@@ -8,10 +8,10 @@ import type { Priority, Task } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
-import { useFilter } from '../composables/useFilter.ts'
 import '../styles/empty-state.css'
-import type { Filter } from '../types/filter.ts'
 import FilterPanel from '../components/FilterPanel.vue'
+import { useTaskFilters } from '../composables/useTaskFilters.ts'
+import { useTaskModal } from '../composables/useTaskModal.ts'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
@@ -19,47 +19,17 @@ const {show, text, type, openMessage} = useMessage()
 // Filters 
 const showFilters = ref(false)
 
-const filterStatus: Filter[] = [
- {label: "Active", value: "active"}, 
- {label: "Done", value: "done"}
-]
+const { 
+  filtersValue,
+  handleFilterClick, 
+  resetFilters,
+  filterOptions, 
+  activeFilterChips,
+  removeFilterChip,
+  matches,
+  hasActiveFilters
+} = useTaskFilters()
 
-const filterPriority: Filter[] = [
- {label: "High", value: "High"}, 
- {label: "Medium", value: "Medium"},
- {label: "Low", value: "Low"}
-]
-
-const {currentFilterValues: statusFilter, handleSingleFilterClicked: handleStatusFilter} = useFilter()
-const {currentFilterValues: priorityFilter, handleSingleFilterClicked: handlePriorityFilter} = useFilter()
-
-const activeFilterChips = computed(() => {
-  const chips: { key: 'status' | 'priority', label: string }[] = []
-
-  if (statusFilter.value[0] !== 'all') {
-    const match = filterStatus.find(f => f.value === statusFilter.value[0])
-    if (match) chips.push({ key: 'status', label: match.label })
-  }
-
-  if (priorityFilter.value[0] !== 'all') {
-    const match = filterPriority.find(f => f.value === priorityFilter.value[0])
-    if (match) chips.push({ key: 'priority', label: match.label })
-  }
-
-  return chips
-})
-
-const hasActiveFilters = computed(() => activeFilterChips.value.length > 0)
-
-function removeFilterChip(key: 'status' | 'priority'){
-  if(key === 'status') handleStatusFilter('all')
-  else handlePriorityFilter('all')
-}
-
-function resetFilters(){
-  handleStatusFilter('all')
-  handlePriorityFilter('all')
-}
 
 const search = ref('')
 
@@ -70,58 +40,21 @@ const filteredMainTasks = computed(() => {
     .filter(t => {
       if (!t.title.toLowerCase().includes(searchText)) return false
 
-      const matchesStatus = statusFilter.value.includes('all') || (statusFilter.value.includes('active') && !t.done) || (statusFilter.value.includes('done') && t.done)
-      const matchesPriority = priorityFilter.value.includes('all') || (t.priority && priorityFilter.value.includes(t.priority))
-      
-      return matchesStatus && matchesPriority
+      return matches(t)
     })
 })
 
-// actions 
-
-function newTask(){
-  editingTask.value = null 
-  mainTaskId.value = null
-  mode.value = 'create'
-  showTaskModal.value = true
-}
-
-function addSubTask(taskId: number){
-  editingTask.value = null
-  mode.value = 'new-sub-task'
-  mainTaskId.value = taskId
-  showTaskModal.value = true
-}
-
-function editTask(task: Task){
-  if(!task) return 
-  editingTask.value = task
-  mode.value = 'edit'
-  mainTaskId.value = null
-  showTaskModal.value = true
-}
-
-function markAsDone(id: number){
-  store.markAsDone(id)
-  openMessage('success', 'Task completed sucessfully')
-} 
-
-function markAsUnDone(id: number){
-  store.markAsUnDone(id)
-  openMessage('success', 'Task reopened sucessfully')
-} 
-
-function removeTask(id: number){
-  taskToRemove.value = id
-  showConfirmModal.value = true
-} 
-
-
 // TaskModal
-const showTaskModal = ref<boolean>(false)
-const mode = ref<'create' | 'edit' | 'new-sub-task'>('create')
-const editingTask = ref<Task | null>(null)
-const mainTaskId = ref<number | null>(null)
+const {
+  showTaskModal,
+  mode,
+  editingTask,
+  mainTaskId,
+  newTask,
+  addSubTask,
+  editTask,
+  closeTaskModal
+} = useTaskModal()
 
 function handleSubmit(task: {
                         title: string, 
@@ -140,16 +73,25 @@ function handleSubmit(task: {
   closeTaskModal()
 }
 
-function closeTaskModal(){
-  mode.value = 'create'
-  editingTask.value = null
-  showTaskModal.value = false
-}
-
 function cancelTaskCreation(msg: string){
   closeTaskModal()
   openMessage("cancel", msg)
 }
+
+function markAsDone(id: number){
+  store.markAsDone(id)
+  openMessage('success', 'Task completed sucessfully')
+} 
+
+function markAsUnDone(id: number){
+  store.markAsUnDone(id)
+  openMessage('success', 'Task reopened sucessfully')
+} 
+
+  function removeTask(id: number) {
+      taskToRemove.value = id
+      showConfirmModal.value = true
+  }
 
 // ConfirmModal
 const showConfirmModal = ref<boolean>(false)
@@ -177,13 +119,11 @@ function confirmDeleteTask(){
   <div class="page">
 
     <div class="header">
-
       <h1>Tasks</h1>
 
       <button class="add-task-btn" @click="newTask">
         + Add Task
       </button>
-
     </div>
 
     <div class="search-bar">
@@ -199,13 +139,8 @@ function confirmDeleteTask(){
       </button>
 
       <div v-if="hasActiveFilters" class="active-chips">
-        <button
-          v-for="chip in activeFilterChips"
-          :key="chip.key"
-          class="chip"
-          @click="removeFilterChip(chip.key)"
-        >
-          {{ chip.label }}
+        <button v-for="(chip, value) in activeFilterChips" :key="chip" class="chip" @click="removeFilterChip(value)">
+          {{ chip.charAt(0).toUpperCase() + chip.slice(1) }}
           <X :size="12" />
         </button>
 
@@ -213,24 +148,15 @@ function confirmDeleteTask(){
           Clear all
         </button>
       </div>
-
     </div>
 
     <FilterPanel
       :show="showFilters"
-
-      :status-filters="filterStatus"
-      :priority-filters="filterPriority"
-
-      :status-value="statusFilter"
-      :priority-value="priorityFilter"
+      :filters="filterOptions"
+      :model-value="filtersValue"
 
       @close="showFilters=false"
-
-      @status-change="handleStatusFilter"
-
-      @priority-change="handlePriorityFilter"
-
+      @toggle-filter="handleFilterClick"
       @reset="resetFilters"
     />
 
@@ -243,7 +169,7 @@ function confirmDeleteTask(){
       <CircleCheckBig :size="40" />
       <p>Enjoy the free time — no tasks yet</p>
     </div>
-
+    
     <TaskCard 
       v-else
       v-for="task in filteredMainTasks" 
@@ -257,6 +183,8 @@ function confirmDeleteTask(){
       @edit="editTask" 
       @undone="markAsUnDone"
       @add-sub-task="addSubTask"
+
+      class="task-card"
     />
     
     <TaskModal 
@@ -494,6 +422,9 @@ function confirmDeleteTask(){
   color: var(--color-light);
 }
 
+.task-card {
+  margin-bottom: 16px;
+}
 
 @media (max-width: 480px) {
   .search-bar {

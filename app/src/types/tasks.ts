@@ -9,6 +9,6 @@ export type Task = {
   priority?: Priority
 }
 
-export type Priority = 'High' | 'Medium' | 'Low'
+export type Priority = 'high' | 'medium' | 'low'
 
 export type DueState = 'overdue' | 'today' | 'future' | 'done'

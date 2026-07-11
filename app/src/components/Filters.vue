@@ -4,27 +4,40 @@ import type { Filter } from '../types/filter'
 const props = defineProps<{
   allFilters: Filter[]
   currentFilterValues: string[]
+  title?: string
 }>()
 
 const emit = defineEmits<{
-  clickedFilter: [value: string]
+  clickedFilter: [value: string, title?: string]
 }>()
 
 </script>
 
 <template>
+  <span v-if="title" class="filter-title">{{ title }}</span>
   <div class="filters">
-    <button class="pill" :class="{ active: currentFilterValues.includes('all') }" @click="$emit('clickedFilter', 'all')">
-      All
-    </button>
-
-    <button v-for="f in allFilters" :key="f.value" class="pill" :class="{ active: currentFilterValues.includes(f.value) }" @click="$emit('clickedFilter', f.value)">
+    <button 
+      v-for="f in allFilters" 
+      :key="f.value" 
+      class="pill"
+      :class="{ active: currentFilterValues.includes(f.value) }" 
+      @click="title ? $emit('clickedFilter', f.value, title) : $emit('clickedFilter', f.value)"
+    >
       {{ f.label }}
     </button>
   </div>
 </template>
 
 <style scoped>
+.filter-title {
+  font-family: Poppins, sans-serif;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  display: block;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;

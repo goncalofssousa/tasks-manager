@@ -3,27 +3,26 @@ import { computed } from 'vue'
 import { X, RotateCcw } from 'lucide-vue-next'
 import Filters from './Filters.vue'
 import type { Filter } from '../types/filter'
-
 const props = defineProps<{
   show: boolean
-
-  statusFilters: Filter[]
-  priorityFilters: Filter[]
-
-  statusValue: string[]
-  priorityValue: string[]
+  filters: Record<string, Filter[]>
+  modelValue: Record<string, string[]>
 }>()
+
 
 const emit = defineEmits<{
   close: []
-  statusChange: [value: string]
-  priorityChange: [value: string]
+  toggleFilter: [value: string, title?: string]
   reset: []
 }>()
 
 const hasActiveFilters = computed(() => {
-  return !props.statusValue.includes('all') || !props.priorityValue.includes('all')
+  return Object.values(props.modelValue).some(values => values.length > 0)
 })
+
+function handleFilterClick(value: string, title?: string) {
+  emit('toggleFilter', value, title)
+}
 </script>
 
 <template>
@@ -34,11 +33,7 @@ const hasActiveFilters = computed(() => {
         <h3>Filters</h3>
 
         <div class="header-actions">
-          <button
-            v-if="hasActiveFilters"
-            class="reset-btn"
-            @click="$emit('reset')"
-          >
+          <button v-if="hasActiveFilters" class="reset-btn" @click="$emit('reset')">
             <RotateCcw :size="13" />
             Clear
           </button>
@@ -50,27 +45,15 @@ const hasActiveFilters = computed(() => {
       </div>
 
       <div class="filter-body">
-        <div class="filter-section">
-          <span>Status</span>
-          <Filters
-            :all-filters="statusFilters"
-            :current-filter-values="statusValue"
-            @clicked-filter="$emit('statusChange', $event)"
-          />
-        </div>
-
-        <div class="divider" />
-
-        <div class="filter-section">
-          <span>Priority</span>
-          <Filters
-            :all-filters="priorityFilters"
-            :current-filter-values="priorityValue"
-            @clicked-filter="$emit('priorityChange', $event)"
-          />
-        </div>
+          <div v-for="(filterList, filterName) in filters" :key="filterName"  class="filter-section">
+              <Filters 
+                :allFilters="filterList" 
+                :currentFilterValues="modelValue[filterName]" 
+                :title="filterName"
+                @clickedFilter="handleFilterClick"    
+              />
+          </div>
       </div>
-
     </div>
   </Transition>
 </template>
@@ -157,13 +140,15 @@ const hasActiveFilters = computed(() => {
 }
 
 .filter-body {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
 }
 
 .filter-section {
-  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.06);
 }
 
 .filter-section span {
@@ -178,13 +163,6 @@ const hasActiveFilters = computed(() => {
 
   text-transform: uppercase;
   letter-spacing: .05em;
-}
-
-.divider {
-  width: 1px;
-  align-self: stretch;
-
-  background: rgba(255,255,255,.08);
 }
 
 /* transition */
@@ -203,10 +181,6 @@ const hasActiveFilters = computed(() => {
   .filter-body {
     flex-direction: column;
     gap: 18px;
-  }
-
-  .divider {
-    display: none;
   }
 }
 </style>

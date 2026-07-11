@@ -34,6 +34,7 @@ function prevPage(){
 }
 
 const filterOptions: Filter[] = [
+  { value: 'all', label: 'All' },
   { value: 'task_created', label: 'Created' },
   { value: 'task_completed', label: 'Completed' },
   { value: 'task_removed', label: 'Removed' },

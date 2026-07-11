@@ -143,11 +143,11 @@ function submit() {
       </div>
 
       <div class="form-group">
-        <label>Priority</label>
+        <label for="priority">Priority</label>
         <div class="priority-picker">
-          <label v-for="option in ['Low', 'Medium', 'High']" :key="option" class="priority-option" :class="[option, { active: priority === option }]">
-            <input type="radio" name="priority" :value="option" :checked="priority === option" @click="priority = priority === option ? undefined : option" />
-            {{ option }}
+          <label v-for="option in ['low', 'medium', 'high']" :key="option" class="priority-option" :class="[option, { active: priority === option }]">
+            <input id="priority" type="radio" name="priority" :value="option" :checked="priority === option" @click="priority = priority === option ? undefined : option" />
+            {{ option.charAt(0).toUpperCase() + option.slice(1) }}
           </label>  
         </div>
       </div>
@@ -285,20 +285,6 @@ function submit() {
   color: var(--color-accent);
 }
 
-.priority-option.low.active {
-  background: rgba(52, 199, 89, .2);
-  color: #34c759;
-}
-
-.priority-option.medium.active {
-  background: rgba(255, 159, 10, .2);
-  color: #ff9f0a;
-}
-
-.priority-option.high.active {
-  background: rgba(255, 77, 79, .2);
-  color: #ff4d4f;
-}
 
 /* buttons */
 .modal-actions {

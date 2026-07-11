@@ -2,7 +2,7 @@ import { ref } from 'vue'
 
 export function useFilter(){
     const currentFilterValues = ref<string[]>(['all'])
-
+    
     function handleMultipleFilterClicked(value: string) {
         if (value === 'all') {
             currentFilterValues.value = ['all']
