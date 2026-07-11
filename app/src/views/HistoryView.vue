@@ -13,11 +13,26 @@ import Message from '../components/Message.vue'
 import '../styles/empty-state.css'
 
 const historyStore = useHistoryStore()
-
 const {show, text, type, openMessage} = useMessage()
 const {currentFilterValues, handleMultipleFilterClicked} = useFilter()
 
 // filters
+
+const page = ref<number>(1)
+const totalperPage = ref<number>(10)
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredHistory.value.length / totalperPage.value)
+})
+
+function nextPage(){
+  if(page.value < totalPages.value) page.value++
+}
+
+function prevPage(){
+  if(page.value > 1) page.value--
+}
+
 const filterOptions: Filter[] = [
   { value: 'task_created', label: 'Created' },
   { value: 'task_completed', label: 'Completed' },
@@ -26,7 +41,7 @@ const filterOptions: Filter[] = [
   { value: 'deadline_changed', label: 'Deadline Changed' }
 ]
 
-// History ti dusplay
+
 const filteredHistory = computed(() => {
   const filters = currentFilterValues.value
 
@@ -37,10 +52,17 @@ const filteredHistory = computed(() => {
   return historyStore.history.filter(activity => filters.includes(activity.type))
 })
 
-// griouping history by day 
+const paginatedHistory = computed(() => {
+  const startIndex = (page.value - 1) * totalperPage.value
+  const endIndex = page.value * totalperPage.value
+  return filteredHistory.value.slice(startIndex, endIndex)
+})
+
+
+
 const groupedHistory = computed(() => {
   const groups: Record<string, Activity[]> = {}
-  for (const activity of filteredHistory.value) {
+  for (const activity of paginatedHistory.value) {
     const day = activity.date.split('T')[0]
     if (!groups[day]) groups[day] = []
     groups[day].push(activity)
@@ -159,6 +181,12 @@ function handleCancel(){
         </div>
 
       </div>
+    </div>
+
+    <div v-if="totalPages > 1" class="pagination">
+      <button @click="prevPage" :disabled="page === 1" class="page-btn">Previous</button>
+      <span>Page {{ page }} of {{ totalPages }} - {{ filteredHistory.length }} results</span>
+      <button @click="nextPage" :disabled="page === totalPages" class="page-btn">Next</button>
     </div>
 
     <ConfirmModal :show="showModal" :title="'Clear History'" @cancel="handleCancel" @confirm="handleConfirm"/>
@@ -326,6 +354,60 @@ function handleCancel(){
 .activity-time {
   margin: 0;
   font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  margin-top: 20px;
+}
+
+.page-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 14px;
+
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,.08);
+
+  background: var(--color-primary-dark);
+
+  color: var(--color-text-secondary);
+
+  font-family: Poppins, sans-serif;
+  font-size: .85rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all .2s ease;
+}
+
+.page-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.page-btn.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: rgba(121,111,246,.1);
+}
+
+.page-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.08);
+
   color: var(--color-text-secondary);
 }
 </style>
