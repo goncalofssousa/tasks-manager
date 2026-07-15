@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, CircleCheckBig, FilterIcon, X, SearchX  } from 'lucide-vue-next'
+import { Search, CircleCheckBig, FilterIcon, X, SearchX, Plus  } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
 import TaskCard from '../components/TaskCard.vue'
 import type { Priority, Task } from '../types/tasks.ts'
@@ -122,7 +122,8 @@ function confirmDeleteTask(){
       <h1>Tasks</h1>
 
       <button class="add-task-btn" @click="newTask">
-        + Add Task
+        <Plus :size="16"/>
+        Add Task
       </button>
     </div>
 
@@ -219,16 +220,16 @@ function confirmDeleteTask(){
 /* ADD BUTTON */
 .add-task-btn {
   width: auto;
-  padding: 8px 12px;
+  padding: 8px 14px;
 
-  border: none;
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: 10px;
 
-  background: var(--color-accent);
-  color: white;
+  background: #27272a;
+  color: #fafafa;
 
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: .85rem;
+  font-weight: 500;
 
   cursor: pointer;
 
@@ -241,7 +242,8 @@ function confirmDeleteTask(){
 
 .add-task-btn:hover {
   transform: translateY(-1px);
-  filter: brightness(1.15);
+  background: #3f3f46;
+  border-color: rgba(255,255,255,.18);
 }
 
 .add-task-btn:active {
@@ -253,16 +255,17 @@ function confirmDeleteTask(){
   height: 4rem; 
   display: flex;
   align-items: center;
+  justify-content: center;
 
-  gap: 5px;
+  gap: 10px;
 
   padding: 10px 14px;
   margin: 10px 0 20px;
 
-  background: var(--color-primary-dark);
+  background: #18181b;
+  border: 1px solid rgba(255,255,255,.08);
 
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.06);
 
   transition: all .2s ease;
 }
@@ -273,13 +276,14 @@ function confirmDeleteTask(){
   flex-shrink: 0;
 } 
 
+
 .search-bar:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(121,111,246,.15);
+  border-color: white;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
 }
 
 .search-bar:hover {
-  border-color: rgba(121,111,246,.4);
+    border-color: rgba(255,255,255,.2);
 }
 
 .search-bar input {
@@ -319,11 +323,9 @@ function confirmDeleteTask(){
 
   border-radius: 10px;
 
+  background: #18181b;
   border: 1px solid rgba(255,255,255,.08);
-
-  background: var(--color-primary-dark);
-
-  color: var(--color-text-secondary);
+  color: #a1a1aa;
 
   font-family: Poppins, sans-serif;
   font-size: .85rem;
@@ -336,18 +338,14 @@ function confirmDeleteTask(){
 
 
 .filter-btn:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: white;
+  color: white;
 }
 
 .filter-btn.active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  background: rgba(121,111,246,.1);
-}
-
-.filter-btn:active {
-  transform: scale(.96);
+  background: rgba(255,255,255,.08);
+  border-color: white;
+  color: white;
 }
 
 .filter-count {
@@ -382,10 +380,10 @@ function confirmDeleteTask(){
   padding: 6px 10px;
 
   border-radius: 999px;
-  border: 1px solid rgba(121,111,246,.3);
 
-  background: rgba(121,111,246,.1);
-  color: var(--color-accent);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  color: white;
 
   font-family: Poppins, sans-serif;
   font-size: .8rem;
@@ -396,7 +394,7 @@ function confirmDeleteTask(){
 }
 
 .chip:hover {
-  background: rgba(121,111,246,.18);
+  background: rgba(255,255,255,.12);
 }
 
 .clear-all {

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Modal from '../components/Modal.vue'
 
 const props = defineProps<{
   show: boolean
@@ -13,34 +12,62 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <Modal :show="show">
-    <div class="confirm-modal">
+  <div v-if="show" class="overlay">
+    <div class="modal">
+      <div class="confirm-modal">
 
-        <div class="confirm-icon">
-            ⚠️
-        </div>
+          <div class="confirm-icon">
+              ⚠️
+          </div>
 
-        <h2> {{ title }}</h2>
+          <h2> {{ title }}</h2>
 
-        <p>
-            This action cannot be undone. Are you sure you want to continue?
-        </p>
+          <p>
+              This action cannot be undone. Are you sure you want to continue?
+          </p>
 
-        <div class="modal-actions">
-            <button class="modal-btn cancel" @click="$emit('cancel')">
-                Cancel
-            </button>
+          <div class="modal-actions">
+              <button class="modal-btn cancel" @click="$emit('cancel')">
+                  Cancel
+              </button>
 
-            <button class="modal-btn danger" @click="$emit('confirm')">
-                Delete
-            </button>
-        </div>
-
+              <button class="modal-btn danger" @click="$emit('confirm')">
+                  Delete
+              </button>
+          </div>
+      </div>
     </div>
-  </Modal>
+  </div>
 </template>
 
 <style scoped>
+.overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0,0,0,0.6);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 1000;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+
+  background: var(--color-primary-dark);
+  border-radius: 14px;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .confirm-modal {
   display: flex;
   flex-direction: column;
@@ -125,5 +152,11 @@ const emit = defineEmits<{
 .modal-btn.danger:hover {
   transform: translateY(-2px);
   filter: brightness(1.1);
+}
+
+@media (max-width: 600px) {
+  .modal {
+    max-width: 320px;
+  }
 }
 </style>

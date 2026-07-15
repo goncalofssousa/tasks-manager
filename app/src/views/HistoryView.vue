@@ -233,6 +233,7 @@ function handleCancel(){
 }
 
 .clear-btn:hover {
+  transform: translateY(-1px);
   background: rgba(231, 76, 60, .15);
   border-color: rgba(231, 76, 60, .4);
 }

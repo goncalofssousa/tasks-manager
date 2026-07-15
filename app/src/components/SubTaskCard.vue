@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import type { Task } from '../types/tasks.ts'
-import {Check,Pencil,Trash2,Calendar,RotateCcw} from 'lucide-vue-next'
-import { computed } from 'vue'
+import {Calendar, EllipsisVertical} from 'lucide-vue-next'
+import { ref } from 'vue'
 import { useTaskState } from '../composables/useTaskState.ts'
 import '../styles/task-ui.css'
+import TaskOptionsMenu from './TaskOptionsMenu.vue'
+import { onClickOutside } from '@vueuse/core'
 
 const props = defineProps<{
   subTask: Task
 }>()
 
-defineEmits([
+const emit = defineEmits([
   'done',
   'undone',
   'edit',
@@ -18,58 +20,71 @@ defineEmits([
 
 const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
 
-const priorityClass = computed(() => {
-  if (!props.subTask.priority)
-    return ''
 
-  return `priority-${props.subTask.priority.toLowerCase()}`
-})
+const showOptions = ref(false)
 
-const stateClass = computed(() => {
-  if (props.subTask.done)
-    return 'completed'
+function toggleOptions() {
+  showOptions.value = !showOptions.value
+}
 
-  if (dueState.value === 'overdue')
-    return 'overdue'
+function editTask() {
+  showOptions.value = false
+  emit('edit', props.subTask)
+}
 
-  if (dueState.value === 'today')
-    return 'today'
+function deleteTask() {
+  showOptions.value = false
+  emit('delete', props.subTask.id)
+}
 
-  return ''
+function markAsDone() {
+  showOptions.value = false
+  emit('done', props.subTask.id)
+}
+
+function markAsUndone() {
+  showOptions.value = false
+  emit('undone', props.subTask.id)
+}
+
+const button = ref()
+const menu = ref()
+
+onClickOutside(menu, () => {
+  showOptions.value = false
+}, {
+  ignore: [button]
 })
 </script>
 
 <template>
 
-<div class="subtask":class="stateClass">
-
+<div class="subtask":class="{'completed': subTask.done}">
   <div class="subtask-header">
     <div class="subtask-title-wrapper">
       <p class="subtask-title">
         {{ subTask.title }}
       </p>
 
-      <span v-if="subTask.priority" class="priority-badge" :class="priorityClass">
-        {{ subTask.priority }} Priority
+      <span v-if="subTask.done" class="badge completed">
+        Completed
       </span>
     </div>
 
-    <div class="subtask-actions">
-      <button v-if="!subTask.done" class="icon-btn complete small" @click="$emit('done', subTask.id)" >
-        <Check :size="13"/>
+    <div class="actions" :class="{ 'completed': subTask.done }">
+      <button ref="button" class="icon-btn" @click="toggleOptions">
+        <EllipsisVertical />
       </button>
-
-      <button v-if="!subTask.done" class="icon-btn edit small" @click="$emit('edit', subTask)">
-        <Pencil :size="13"/>
-      </button>
-
-      <button v-else class="icon-btn edit small" @click="$emit('undone', subTask.id)">
-        <RotateCcw :size="13"/>
-      </button>
-
-      <button class="icon-btn delete small" @click="$emit('delete', subTask.id)">
-        <Trash2 :size="13"/>
-      </button>
+      <TaskOptionsMenu
+        ref="menu"
+        :show="showOptions"
+        :add-sub-task="false"
+        :task-done="subTask.done"
+        @edit="editTask"
+        @delete="deleteTask"
+        @markDone="markAsDone"
+        @markUndone="markAsUndone"
+      />
     </div>
 
   </div>
@@ -78,26 +93,28 @@ const stateClass = computed(() => {
     {{ subTask.descricao }}
   </p>
 
-  <div class="date" :class="dueState">
-    <Calendar :size="12"/>
+    <div class="date" :class="dueState">
+    <div class="date-content">
+      <Calendar :size="12" />
 
-    <p v-if="dueState !== 'done'">
-      Due Date:
-      {{ subTask.dueDate || 'No date' }}
-    </p>
+      <p v-if="dueState !== 'done'">
+        <strong>Due Date:</strong>
+        {{ subTask.dueDate || 'No date' }}
+      </p>
 
-    <p v-else>
-      Task Completed:
-      {{ subTask.doneDate }}
-    </p>
+      <p v-else>
+        <strong>Completed on:</strong>
+        {{ subTask.doneDate }}
+      </p>
+    </div>
 
-    <div v-if="timeSinceOverdue" class="warning overdue-warning">
+    <p v-if="timeSinceOverdue" class="warning overdue-warning">
       ⚠ {{ timeSinceOverdue }}
-    </div>
+    </p>
 
-    <div v-else-if="dueState === 'today'" class="warning today-warning">
-      ⚠ Task due today
-    </div>
+    <p v-else-if="dueState === 'today'" class="warning today-warning">
+      ⚠ Due today
+    </p>
   </div>
 
 </div>
@@ -118,23 +135,17 @@ const stateClass = computed(() => {
   border-left:2px solid rgba(255,255,255,.08);
 }
 
-/* STATES */
 
-
-.subtask.completed {
-  opacity:.55;
+.subtask.subtask.completed{
   border-left-color:#22c55e;
-  text-decoration:line-through;
+  opacity: .55;
 }
 
-.subtask.overdue {
-  border-left-color:#ef4444;
+.subtask.completed .subtask-title,
+.subtask.completed .subtask-description {
+  text-decoration: line-through;
 }
 
-
-.subtask.today {
-  border-left-color:#f59e0b;
-}
 
 .subtask-header {
   display:flex;
@@ -171,7 +182,7 @@ const stateClass = computed(() => {
 
 /* PRIORITY */
 
-.priority-badge {
+.badge {
   padding:2px 8px;
   border-radius:999px;
   font-size:.6rem;
@@ -180,18 +191,8 @@ const stateClass = computed(() => {
   letter-spacing:.06em;
 }
 
-.priority-high {
-  color:#ef4444;
-  background:rgba(239,68,68,.12);
-}
-
-.priority-medium {
-  color:#f59e0b;
-  background:rgba(245,158,11,.12);
-}
-
-.priority-low {
-  color:#3b82f6;
-  background:rgba(59,130,246,.12);
+.badge.completed {
+  color:#22c55e;
+  background:rgba(34,197,94,.12);
 }
 </style>

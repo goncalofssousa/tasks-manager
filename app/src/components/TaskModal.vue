@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import Modal from '../components/Modal.vue'
 import type { Priority, Task } from '../types/tasks.ts'
 import { useTasksStore } from '../stores/tasks.ts';
 
@@ -108,68 +107,97 @@ function submit() {
 </script>
 
 <template>
-  <Modal :show="show">
+  <div v-if="show" class="overlay">
+    <div class="modal">
+      <h2>
+        {{ modalTitle }}
+      </h2>
 
-    <h2>
-      {{ modalTitle }}
-    </h2>
+      <form class="task-form" @submit.prevent="submit">
 
-    <form class="task-form" @submit.prevent="submit">
-
-      <div class="form-group">
-        <label for="title">
-          Title 
-          <span class="required-badge">Required</span>
-        </label>
-        <input id="title" v-model="title" placeholder="Task title..." />
-      </div>
-
-      <div class="form-group">
-        <label for="desc">Description</label>
-        <textarea id="desc" v-model="descricao" rows="4" placeholder="Describe your task..."></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="date" >Due Date</label>
-        <input 
-          id="date" type="date" v-model="dueDate" :class="{ error: dueDateError !== '' }"
-          :max="props.mainTaskId ? tasksStore.entities[props.mainTaskId]?.dueDate 
-                : props.task?.parentId ? tasksStore.entities[props.task.parentId]?.dueDate
-                : undefined"
-        />
-        <p v-if="dueDateError" class="error-text">
-          {{ dueDateError }}
-        </p>
-      </div>
-
-      <div class="form-group">
-        <label for="priority">Priority</label>
-        <div class="priority-picker">
-          <label v-for="option in ['low', 'medium', 'high']" :key="option" class="priority-option" :class="[option, { active: priority === option }]">
-            <input id="priority" type="radio" name="priority" :value="option" :checked="priority === option" @click="priority = priority === option ? undefined : option" />
-            {{ option.charAt(0).toUpperCase() + option.slice(1) }}
-          </label>  
+        <div class="form-group">
+          <label for="title">
+            Title 
+            <span class="required-badge">Required</span>
+          </label>
+          <input id="title" v-model="title" placeholder="Task title..." />
         </div>
-      </div>
 
-      <div class="modal-actions">
+        <div class="form-group">
+          <label for="desc">Description</label>
+          <textarea id="desc" v-model="descricao" rows="4" placeholder="Describe your task..."></textarea>
+        </div>
 
-        <button type="button" class="modal-btn cancel" @click="$emit('close')">
-          Cancel
-        </button>
+        <div class="form-group">
+          <label for="date" >Due Date</label>
+          <input 
+            id="date" type="date" v-model="dueDate" :class="{ error: dueDateError !== '' }"
+            :max="props.mainTaskId ? tasksStore.entities[props.mainTaskId]?.dueDate 
+                  : props.task?.parentId ? tasksStore.entities[props.task.parentId]?.dueDate
+                  : undefined"
+          />
+          <p v-if="dueDateError" class="error-text">
+            {{ dueDateError }}
+          </p>
+        </div>
 
-        <button type="submit" class="modal-btn confirm" :disabled="!canSend">
-          {{ modalSubmitButtonText }}
-        </button>
+        <div v-if="mode !== 'new-sub-task' && mainTaskId === undefined" class="form-group">
+          <label for="priority">Priority</label>
+          <div class="priority-picker">
+            <label v-for="option in ['low', 'medium', 'high']" :key="option" class="priority-option" :class="[option, { active: priority === option }]">
+              <input id="priority" type="radio" name="priority" :value="option" :checked="priority === option" @click="priority = priority === option ? undefined : option" />
+              {{ option.charAt(0).toUpperCase() + option.slice(1) }}
+            </label>  
+          </div>
+        </div>
 
-      </div>
+        <div class="modal-actions">
 
-    </form>
+          <button type="button" class="modal-btn cancel" @click="$emit('close')">
+            Cancel
+          </button>
 
-  </Modal>
+          <button type="submit" class="modal-btn confirm" :disabled="!canSend">
+            {{ modalSubmitButtonText }}
+          </button>
+
+        </div>
+
+      </form>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+
+.overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0,0,0,0.6);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 1000;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+
+  background: var(--color-primary-dark);
+  border-radius: 14px;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
 .task-form {
   display: flex;
   flex-direction: column;
@@ -195,10 +223,11 @@ function submit() {
   padding: 12px 14px;
 
   border-radius: 12px;
+  background: #101012;
+
   border: 1px solid rgba(255,255,255,.08);
 
-  background: var(--color-primary);
-  color: white;
+  color: var(--color-light);
 
   font-size: .95rem;
   font-family: Poppins, sans-serif;
@@ -213,8 +242,10 @@ function submit() {
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(121,111,246,.15);
+
+  border-color: white;
+
+  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
 }
 
 .form-group input::placeholder,
@@ -222,14 +253,20 @@ function submit() {
   color: var(--color-text-secondary);
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+
 .required-badge {
   font-size: .7rem;
   padding: 2px 6px;
 
   border-radius: 999px;
 
-  background: rgba(121,111,246,.15);
-  color: var(--color-accent);
+  background: rgba(255,255,255,.08);
+  color: white;
 
   font-weight: 500;
 }
@@ -259,9 +296,10 @@ function submit() {
   padding: 10px 8px;
 
   border-radius: 12px;
+  background: #101012;
+
   border: 1px solid rgba(255,255,255,.08);
 
-  background: var(--color-primary);
   color: var(--color-text-secondary);
 
   font-size: .85rem;
@@ -277,14 +315,14 @@ function submit() {
 
 .priority-option:hover {
   color: white;
+  border-color: rgba(255,255,255,.18);
 }
 
 .priority-option.active {
-  background: rgba(121, 111, 246, .15);
-  border-color: rgba(121, 111, 246, .5);
-  color: var(--color-accent);
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.22);
+  color: white;
 }
-
 
 /* buttons */
 .modal-actions {
@@ -319,13 +357,14 @@ function submit() {
 }
 
 .modal-btn.confirm {
-  background: var(--color-accent);
-  color: white;
-
-  box-shadow: 0 10px 20px rgba(121,111,246,.25);
+  background: #27272a;
+  color: #fafafa;
+  border: 1px solid rgba(255,255,255,.08);
 }
 
 .modal-btn.confirm:hover {
+  background: #3f3f46;
+  border-color: rgba(255,255,255,.18);
   transform: translateY(-2px);
   filter: brightness(1.1);
 }
@@ -333,7 +372,12 @@ function submit() {
 .modal-btn.confirm:disabled {
   opacity: .4;
   cursor: not-allowed;
-  transform: none;
   box-shadow: none;
+}
+
+@media (max-width: 600px) {
+  .modal {
+    max-width: 320px;
+  }
 }
 </style>

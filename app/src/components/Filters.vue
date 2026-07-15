@@ -47,10 +47,10 @@ const emit = defineEmits<{
 .pill {
   padding: 8px 14px;
 
-  border: 1px solid rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .05);
   border-radius: 999px;
 
-  background: var(--color-primary-dark);
+  background: rgba(255, 255, 255, .03);
   color: var(--color-text-secondary);
 
   font-family: Poppins, sans-serif;
@@ -64,13 +64,27 @@ const emit = defineEmits<{
 
 .pill:hover {
   border-color: rgba(255, 255, 255, .18);
-  color: white;
+  color: var(--color-light);
+  transform: translateY(-1px);
 }
 
 .pill.active {
-  background: rgba(121, 111, 246, .15);
-  border-color: rgba(121, 111, 246, .5);
-  color: var(--color-accent);
+  background: rgba(255, 255, 255, .16);
+  border-color: rgba(255, 255, 255, .3);
+  color: #fff;
+
+  box-shadow: 0 0 12px rgba(255,255,255,.08);
+
+  transition: all .2s ease;
+}
+
+.pill.active:hover {
+  background: rgba(255, 255, 255, .22);
+  border-color: rgba(255, 255, 255, .4);
+
+  box-shadow: 0 0 16px rgba(255,255,255,.12);
+
+  transform: translateY(-1px);
 }
 
 .pill:active {

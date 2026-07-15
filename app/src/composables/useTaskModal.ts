@@ -7,14 +7,14 @@ export function useTaskModal() {
 
     const editingTask = ref<Task | null>(null)
     const taskToRemove = ref<number | null>(null)
-    const mainTaskId = ref<number | null>(null)
+    const mainTaskId = ref<number | undefined>(undefined)
 
     const mode = ref<'create' | 'edit' | 'new-sub-task'>('create')
     
 
     function newTask() {
         editingTask.value = null
-        mainTaskId.value = null
+        mainTaskId.value = undefined
         mode.value = 'create'
         showTaskModal.value = true
     }
@@ -28,7 +28,7 @@ export function useTaskModal() {
 
     function editTask(task: Task) {
         editingTask.value = task
-        mainTaskId.value = null
+        mainTaskId.value = task.parentId
         mode.value = 'edit'
         showTaskModal.value = true
     }

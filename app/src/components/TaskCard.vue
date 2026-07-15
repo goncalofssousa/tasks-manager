@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import type { Task } from '../types/tasks'
 import { computed, ref } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import {
-  Check,
-  Pencil,
-  Trash2,
+  ChevronDown,
+  EllipsisVertical,
   Calendar,
-  RotateCcw,
-  ChevronDown
 } from 'lucide-vue-next'
 
 import SubTaskCard from './SubTaskCard.vue'
 import { useTaskState } from '../composables/useTaskState.ts'
 import '../styles/task-ui.css'
+import TaskOptionsMenu from './TaskOptionsMenu.vue'
 
 
 const props = defineProps<{
@@ -20,7 +19,7 @@ const props = defineProps<{
   subTasks: Task[]
 }>()
 
-defineEmits([
+const emit = defineEmits([
   'done',
   'undone',
   'delete',
@@ -28,25 +27,32 @@ defineEmits([
   'addSubTask'
 ])
 
-const { dueState, timeSinceOverdue } = useTaskState(props.task)
+
+// subtasks
 
 const showSubTasks = ref(false)
+
+function toggleSubTasks() {
+  showSubTasks.value = !showSubTasks.value
+}
 
 const completedSubTasks = computed(() =>
   props.subTasks.filter(t => t.done).length
 )
 
 const progress = computed(() =>
-  props.subTasks.length === 0
-    ? 0
-    : (completedSubTasks.value / props.subTasks.length) * 100
+  props.subTasks.length === 0 ? 0 : (completedSubTasks.value / props.subTasks.length) * 100
 )
 
+// priotiy class
 const priorityClass = computed(() => {
   if (!props.task.priority) return ''
 
   return `priority-${props.task.priority.toLowerCase()}`
 })
+
+// task state 
+const { dueState, timeSinceOverdue } = useTaskState(props.task)
 
 
 const cardStateClass = computed(() => {
@@ -62,75 +68,110 @@ const cardStateClass = computed(() => {
   return ''
 })
 
+// options 
 
-function toggleSubTasks() {
-  showSubTasks.value = !showSubTasks.value
+const showOptions = ref(false)
+
+function toggleOptions() {
+  showOptions.value = !showOptions.value
 }
+
+const button = ref()
+const menu = ref()
+
+onClickOutside(menu, () => {
+  showOptions.value = false
+}, {
+  ignore: [button]
+})
+
+function editTask() {
+  showOptions.value = false
+  emit('edit', props.task)
+}
+
+function deleteTask() {
+  showOptions.value = false
+  emit('delete', props.task.id)
+}
+
+function markAsDone() {
+  showOptions.value = false
+  emit('done', props.task.id)
+}
+
+function markAsUndone() {
+  showOptions.value = false
+  emit('undone', props.task.id)
+}
+
+function addSubTask() {
+  showOptions.value = false
+  emit('addSubTask', props.task.id)
+}
+
 </script>
 
 
 <template>
 
 <div class="card" :class="cardStateClass">
-
   <div class="header">
     <div class="title-wrapper">
-      <h3 class="title">
+      <h3 class="title" :class="{ 'completed': task.done }">
         {{ task.title }}
       </h3>
 
-      <span v-if="task.priority" class="priority-badge" :class="priorityClass">
-        {{ task.priority }} Priority
+      <span v-if="task.priority || task.done" class="priority-badge" :class="{ [priorityClass]: !task.done, 'priority-completed': task.done }">
+        {{ !task.done ? `${task.priority} Priority` : 'Completed' }}
       </span>
     </div>
 
-    <div class="actions">
-      <button v-if="!task.done" class="icon-btn complete" @click="$emit('done', task.id)">
-        <Check :size="17"/>
+    <div class="actions" :class="{ 'completed': task.done }">
+      <button ref="button" class="icon-btn" @click="toggleOptions">
+        <EllipsisVertical />
       </button>
 
-      <button v-if="!task.done" class="icon-btn edit" @click="$emit('edit', task)">
-        <Pencil :size="17"/>
-      </button>
-
-      <button v-if="!task.done" class="icon-btn add-subtask" @click="$emit('addSubTask', task.id)">
-        +
-      </button>
-
-      <button v-else class="icon-btn edit" @click="$emit('undone', task.id)">
-        <RotateCcw :size="17"/>
-      </button>
-
-      <button class="icon-btn delete" @click="$emit('delete', task.id)">
-        <Trash2 :size="17"/>
-      </button>
+      <TaskOptionsMenu
+        ref="menu"
+        :show="showOptions"
+        :add-sub-task="true"
+        :task-done="task.done"
+        @edit="editTask"
+        @delete="deleteTask"
+        @markDone="markAsDone"
+        @markUndone="markAsUndone"
+        @addSubTask="addSubTask"
+      />
     </div>
   </div>
 
-  <p v-if="task.descricao" class="description">
+  <p v-if="task.descricao" class="description" :class="{'completed': task.done}">
     {{ task.descricao }}
   </p>
 
   <div class="date" :class="dueState">
-    <Calendar :size="12"/>
+    <div class="date-content">
+      <Calendar :size="12" />
 
-    <p v-if="dueState !== 'done'">
-      Due Date:
-      {{ task.dueDate || 'No date' }}
-    </p>
+      <p v-if="dueState !== 'done'">
+        <strong>Due Date:</strong>
+        {{ task.dueDate || 'No date' }}
+      </p>
 
-    <p v-else>
-      Task Completed:
-      {{ task.doneDate }}
-    </p>
+      <p v-else>
+        <strong>Completed on:</strong>
+        {{ task.doneDate }}
+      </p>
+    </div>
 
-    <div v-if="timeSinceOverdue" class="warning overdue-warning">
+    <p v-if="timeSinceOverdue" class="warning overdue-warning">
       ⚠ {{ timeSinceOverdue }}
-    </div>
+    </p>
 
-    <div v-else-if="dueState === 'today'" class="warning today-warning">
-      ⚠ Task due today
-    </div>
+    <p v-else-if="dueState === 'today'" class="warning today-warning">
+      ⚠ Due today
+    </p>
   </div>
 
 
@@ -171,6 +212,7 @@ function toggleSubTasks() {
   </div>
 </div>
 
+
 </template>
 
 
@@ -184,11 +226,11 @@ function toggleSubTasks() {
 
   padding: 18px;
 
-  background: var(--color-primary-dark);
-
   border-radius: 14px;
 
-  border: 1px solid rgba(255,255,255,.06);
+  background: var(--color-primary-dark);
+
+  border: 1px solid rgba(255,255,255,.08);
   border-left: 3px solid rgba(255,255,255,.12);
 
   box-sizing: border-box;
@@ -196,6 +238,16 @@ function toggleSubTasks() {
   transition: .2s ease;
 }
 
+.card:hover {
+  transform: translateY(-2px);
+
+  border-color: rgba(255,255,255,.18);
+  border-left-color: rgba(255,255,255,.35);
+
+  box-shadow:
+    0 0 12px rgba(255,255,255,.05),
+    0 0 24px rgba(255,255,255,.03);
+}
 
 /* TASK STATES */
 
@@ -203,20 +255,8 @@ function toggleSubTasks() {
   opacity: .6;
   border-left-color: #22c55e;
   box-shadow: -2px 0 14px -6px rgba(34,197,94,.35);
-  text-decoration: line-through;
 }
 
-.card.overdue {
-  border-left-color: #ef4444;
-  box-shadow:
-    -2px 0 14px -6px rgba(239,68,68,.35);
-
-}
-
-.card.today {
-  border-left-color: #f59e0b;
-  box-shadow: -2px 0 14px -6px rgba(245,158,11,.35);
-}
 
 .header {
   display:flex;
@@ -226,7 +266,10 @@ function toggleSubTasks() {
   align-items:center;
 
   width:100%;
+}
 
+.header.completed {
+  text-decoration: line-through;
 }
 
 .title-wrapper {
@@ -243,11 +286,19 @@ function toggleSubTasks() {
   font-weight:600;
 }
 
+.title.completed {
+  text-decoration: line-through;
+}
+
 .description {
   margin:0;
   color:var(--color-text-secondary);
   font-size:.88rem;
   line-height:1.5;
+}
+
+.description.completed {
+  text-decoration: line-through;
 }
 
 /* PRIORITY */
@@ -272,6 +323,11 @@ function toggleSubTasks() {
 .priority-low {
   color:#3b82f6;
   background:rgba(59,130,246,.12);
+}
+
+.priority-completed {
+  color:#22c55e;
+  background:rgba(34,197,94,.12);
 }
 /* PROGRESS */
 
@@ -315,6 +371,10 @@ function toggleSubTasks() {
   cursor:pointer;
 }
 
+.toggle-btn:hover {
+  color: var(--color-accent)
+}
+
 .chevron {
   transition:.25s;
 }
@@ -323,8 +383,6 @@ function toggleSubTasks() {
 .chevron.rotated {
   transform:rotate(180deg);
 }
-
-
 
 /* SUBTASKS */
 
@@ -335,12 +393,5 @@ function toggleSubTasks() {
   width:100%;
   padding-left:14px;
   border-left:2px solid rgba(255,255,255,.08);
-}
-
-/* ACTIONS */
-
-.actions {
-  display:flex;
-  gap:6px;
 }
 </style>
