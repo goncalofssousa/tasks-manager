@@ -61,7 +61,8 @@ export const useTasksStore = defineStore('tasks', {
         done: false,
         dueDate: date,
         parentId, 
-        priority: priority
+        priority: priority,
+        favourite: false 
       }
 
       this.ids.push(task.id)
@@ -209,5 +210,10 @@ export const useTasksStore = defineStore('tasks', {
         }
       }
     },
+
+    toggleFavourite(taskId: number){
+      const task = this.entities[taskId]
+      task.favourite = !task.favourite
+    }
   }
 })

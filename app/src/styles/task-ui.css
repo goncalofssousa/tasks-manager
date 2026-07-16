@@ -26,6 +26,14 @@
   transform: scale(.95);
 }
 
+.icon-btn.favourite {
+  color: gold;
+}
+
+.icon-btn.favourite:hover {
+  color: gold;
+}
+
 .icon-btn:hover {
   background: rgba(255,255,255,.06);
   color: var(--color-light);
@@ -91,20 +99,20 @@
 
 /* ACTIONS */
 
-.actions {
+.task-actions {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.actions.completed {
+.task-actions.completed {
   opacity: 1;
 }
 
 .options-menu {
   position: absolute;
   opacity: 1;
-  top: calc(100% + 8px);
+  top: calc(100%);
   right: 0;
 
   width: 180px;
@@ -121,7 +129,7 @@
 
   overflow: hidden;
 
-  z-index: 100;
+  z-index: 9999;
 }
 
 .option-btn {

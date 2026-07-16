@@ -88,10 +88,14 @@ function markAsUnDone(id: number){
   openMessage('success', 'Task reopened sucessfully')
 } 
 
-  function removeTask(id: number) {
-      taskToRemove.value = id
-      showConfirmModal.value = true
-  }
+function removeTask(id: number) {
+  taskToRemove.value = id
+  showConfirmModal.value = true
+}
+
+function toggleFavourite(id: number){
+  store.toggleFavourite(id)
+}
 
 // ConfirmModal
 const showConfirmModal = ref<boolean>(false)
@@ -112,6 +116,16 @@ function confirmDeleteTask(){
   store.removeTask(taskToRemove.value)
   closeConfirmModal()
   openMessage('success', 'Task removed sucessfully')
+}
+
+const menuOpen = ref<boolean>(false)
+
+function handleMenuOpened(){
+  menuOpen.value = true
+} 
+
+function handleMenuClosed(){
+  menuOpen.value = false 
 }
 </script>
 
@@ -178,12 +192,16 @@ function confirmDeleteTask(){
       :key="task.id" 
       :task="task" 
       :subTasks="store.subTasksMap[task.id] || []"  
+      :menu-open="menuOpen"
 
       @done="markAsDone"   
       @delete="removeTask" 
       @edit="editTask" 
       @undone="markAsUnDone"
       @add-sub-task="addSubTask"
+      @toggle-favourite="toggleFavourite"
+      @opened-menu="handleMenuOpened"
+      @closed-menu="handleMenuClosed"
 
       class="task-card"
     />

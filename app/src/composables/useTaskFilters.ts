@@ -14,11 +14,16 @@ export function useTaskFilters() {
             {label: "Medium", value: "medium"}, 
             {label: "Low", value: "low"}
         ],
+        "Favourite": [
+            {label: "Favourite", value:"favourite"},
+            {label: "Non-Favourite", value:"nonFavourite"}
+        ]
     }
 
     const filtersValue = ref<Record<string, string[]>>({ 
         "Status": [],
-        "Priority": []
+        "Priority": [],
+        "Favourite": []
     })
 
     function handleFilterClick(value: string, title?: string) {
@@ -40,7 +45,6 @@ export function useTaskFilters() {
 
     const activeFilterChips = computed(() => {
         const chips: Record<string, string> = {}
-        console.log('filtersValue.value', filtersValue.value)
         for(const entrykey in filtersValue.value) {
             const filterValues = filtersValue.value[entrykey]
             if(!filterValues || filterValues.length === 0) continue
@@ -68,8 +72,16 @@ export function useTaskFilters() {
         )
     }
 
+    function matchesFavourite(task: Task) {
+        return (
+            filtersValue.value.Favourite.length === 0 || 
+            (filtersValue.value.Favourite[0] === 'favourite' && task.favourite) ||
+            (filtersValue.value.Favourite[0] === 'nonFavourite' && !task.favourite) 
+        )
+    }
+
     function matches(task: Task) {
-        return matchesStatus(task) && matchesPriority(task)
+        return matchesStatus(task) && matchesPriority(task) && matchesFavourite(task)
     }
 
     const hasActiveFilters = computed(() =>{

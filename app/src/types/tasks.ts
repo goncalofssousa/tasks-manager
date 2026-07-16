@@ -7,6 +7,7 @@ export type Task = {
   parentId?: number 
   doneDate?: string
   priority?: Priority
+  favourite: boolean
 }
 
 export type Priority = 'high' | 'medium' | 'low'

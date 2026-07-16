@@ -6,6 +6,7 @@ import {
   ChevronDown,
   EllipsisVertical,
   Calendar,
+  Star,
 } from 'lucide-vue-next'
 
 import SubTaskCard from './SubTaskCard.vue'
@@ -17,6 +18,7 @@ import TaskOptionsMenu from './TaskOptionsMenu.vue'
 const props = defineProps<{
   task: Task
   subTasks: Task[]
+  menuOpen: boolean
 }>()
 
 const emit = defineEmits([
@@ -24,7 +26,10 @@ const emit = defineEmits([
   'undone',
   'delete',
   'edit',
-  'addSubTask'
+  'addSubTask',
+  'toggleFavourite',
+  'openedMenu',
+  'closedMenu'
 ])
 
 
@@ -74,6 +79,8 @@ const showOptions = ref(false)
 
 function toggleOptions() {
   showOptions.value = !showOptions.value
+  if(showOptions.value) emit('openedMenu')
+  else emit('closedMenu')
 }
 
 const button = ref()
@@ -81,41 +88,45 @@ const menu = ref()
 
 onClickOutside(menu, () => {
   showOptions.value = false
+  emit('closedMenu')
 }, {
   ignore: [button]
 })
 
 function editTask() {
-  showOptions.value = false
+  toggleOptions()
   emit('edit', props.task)
 }
 
 function deleteTask() {
-  showOptions.value = false
+  toggleOptions()
   emit('delete', props.task.id)
 }
 
 function markAsDone() {
-  showOptions.value = false
+  toggleOptions()
   emit('done', props.task.id)
 }
 
 function markAsUndone() {
-  showOptions.value = false
+  toggleOptions()
   emit('undone', props.task.id)
 }
 
 function addSubTask() {
-  showOptions.value = false
+  toggleOptions()
   emit('addSubTask', props.task.id)
 }
 
+function toggleFavourite(){
+  emit('toggleFavourite', props.task.id)
+}
 </script>
 
 
 <template>
 
-<div class="card" :class="cardStateClass">
+<div class="card" :class="[cardStateClass, {'disabled': menuOpen}]">
   <div class="header">
     <div class="title-wrapper">
       <h3 class="title" :class="{ 'completed': task.done }">
@@ -127,22 +138,29 @@ function addSubTask() {
       </span>
     </div>
 
-    <div class="actions" :class="{ 'completed': task.done }">
-      <button ref="button" class="icon-btn" @click="toggleOptions">
-        <EllipsisVertical />
+    <div class="all-actions">
+      <button class="icon-btn" :class="{'favourite': task.favourite}" @click="toggleFavourite">
+        <Star   :fill="task.favourite ? 'currentColor' : 'none'"
+                :stroke-width="2" :size="20"/>
       </button>
 
-      <TaskOptionsMenu
-        ref="menu"
-        :show="showOptions"
-        :add-sub-task="true"
-        :task-done="task.done"
-        @edit="editTask"
-        @delete="deleteTask"
-        @markDone="markAsDone"
-        @markUndone="markAsUndone"
-        @addSubTask="addSubTask"
-      />
+      <div class="task-actions" :class="{ 'completed': task.done }">
+        <button ref="button" class="icon-btn" @click="toggleOptions">
+          <EllipsisVertical :size="25"/>
+        </button>
+
+        <TaskOptionsMenu
+          ref="menu"
+          :show="showOptions"
+          :add-sub-task="true"
+          :task-done="task.done"
+          @edit="editTask"
+          @delete="deleteTask"
+          @markDone="markAsDone"
+          @markUndone="markAsUndone"
+          @addSubTask="addSubTask"
+        />
+      </div>
     </div>
   </div>
 
@@ -238,7 +256,7 @@ function addSubTask() {
   transition: .2s ease;
 }
 
-.card:hover {
+.card:not(.disabled):hover {
   transform: translateY(-2px);
 
   border-color: rgba(255,255,255,.18);
@@ -248,6 +266,7 @@ function addSubTask() {
     0 0 12px rgba(255,255,255,.05),
     0 0 24px rgba(255,255,255,.03);
 }
+
 
 /* TASK STATES */
 
@@ -329,6 +348,7 @@ function addSubTask() {
   color:#22c55e;
   background:rgba(34,197,94,.12);
 }
+
 /* PROGRESS */
 
 .progress-wrapper {
@@ -383,6 +403,12 @@ function addSubTask() {
 .chevron.rotated {
   transform:rotate(180deg);
 }
+
+.all-actions  {
+  display: flex;
+  flex-direction: row;
+}
+
 
 /* SUBTASKS */
 
