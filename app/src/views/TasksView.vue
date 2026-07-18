@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, CircleCheckBig, FilterIcon, X, SearchX, Plus  } from 'lucide-vue-next'
+import { Search, FilterIcon, X, Plus  } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
-import TaskCard from '../components/TaskCard.vue'
 import type { Priority, Task } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
-import '../styles/empty-state.css'
 import FilterPanel from '../components/FilterPanel.vue'
 import { useTaskFilters } from '../composables/useTaskFilters.ts'
 import { useTaskModal } from '../composables/useTaskModal.ts'
+import TaskSection from '../components/TaskSection.vue'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
@@ -30,13 +29,23 @@ const {
   hasActiveFilters
 } = useTaskFilters()
 
-
 const search = ref('')
 
-const filteredMainTasks = computed(() => {
+const filteredMainTasksActive = computed(() => {
   const searchText = search.value.toLowerCase()
 
-  return store.mainTasks
+  return store.mainTasksActive
+    .filter(t => {
+      if (!t.title.toLowerCase().includes(searchText)) return false
+
+      return matches(t)
+    })
+})
+
+const filteredMainTasksDone = computed(() => {
+  const searchText = search.value.toLowerCase()
+
+  return store.mainTasksDone
     .filter(t => {
       if (!t.title.toLowerCase().includes(searchText)) return false
 
@@ -77,27 +86,7 @@ function cancelTaskCreation(msg: string){
   closeTaskModal()
   openMessage("cancel", msg)
 }
-
-function markAsDone(id: number){
-  store.markAsDone(id)
-  openMessage('success', 'Task completed sucessfully')
-} 
-
-function markAsUnDone(id: number){
-  store.markAsUnDone(id)
-  openMessage('success', 'Task reopened sucessfully')
-} 
-
-function removeTask(id: number) {
-  taskToRemove.value = id
-  showConfirmModal.value = true
-}
-
-function toggleFavourite(id: number){
-  store.toggleFavourite(id)
-}
-
-// ConfirmModal
+// Confirm Modal
 const showConfirmModal = ref<boolean>(false)
 const taskToRemove = ref<number | null>(null)
 
@@ -118,14 +107,9 @@ function confirmDeleteTask(){
   openMessage('success', 'Task removed sucessfully')
 }
 
-const menuOpen = ref<boolean>(false)
-
-function handleMenuOpened(){
-  menuOpen.value = true
-} 
-
-function handleMenuClosed(){
-  menuOpen.value = false 
+function removeTask(id: number) {
+  taskToRemove.value = id
+  showConfirmModal.value = true
 }
 </script>
 
@@ -175,36 +159,30 @@ function handleMenuClosed(){
       @reset="resetFilters"
     />
 
-    <div v-if="filteredMainTasks.length === 0 && hasActiveFilters" class="empty-state">
-      <SearchX :size="40" />
-      <p>No tasks match these filters</p>
-    </div>
-
-    <div v-else-if="filteredMainTasks.length === 0" class="empty-state"> 
-      <CircleCheckBig :size="40" />
-      <p>Enjoy the free time — no tasks yet</p>
-    </div>
-    
-    <TaskCard 
-      v-else
-      v-for="task in filteredMainTasks" 
-
-      :key="task.id" 
-      :task="task" 
-      :subTasks="store.subTasksMap[task.id] || []"  
-      :menu-open="menuOpen"
-
-      @done="markAsDone"   
-      @delete="removeTask" 
-      @edit="editTask" 
-      @undone="markAsUnDone"
+    <TaskSection 
+      :title="'Pending'"
+      :tasks="filteredMainTasksActive"
+      :has-active-filters="hasActiveFilters"
+      :section = "'pending'"
+      
+      @edit-task="editTask"
       @add-sub-task="addSubTask"
-      @toggle-favourite="toggleFavourite"
-      @opened-menu="handleMenuOpened"
-      @closed-menu="handleMenuClosed"
-
-      class="task-card"
+      @remove-task="removeTask"
+      @message="openMessage"
     />
+
+    <TaskSection 
+      v-if="filteredMainTasksDone.length > 0"
+      :title="'Completed'"
+      :tasks="filteredMainTasksDone"
+      :has-active-filters="hasActiveFilters"
+      :section = "'completed'"
+      @edit-task="editTask"
+      @add-sub-task="addSubTask"
+      @remove-task="removeTask"
+      @message="openMessage"
+    />
+
     
     <TaskModal 
       :show="showTaskModal" 
@@ -231,6 +209,8 @@ function handleMenuClosed(){
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 
   margin-bottom: 10px;
 }
@@ -301,7 +281,7 @@ function handleMenuClosed(){
 }
 
 .search-bar:hover {
-    border-color: rgba(255,255,255,.2);
+  border-color: rgba(255,255,255,.2);
 }
 
 .search-bar input {
@@ -327,8 +307,6 @@ function handleMenuClosed(){
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-
-  margin-bottom: 16px;
 }
 
 
@@ -438,10 +416,6 @@ function handleMenuClosed(){
   color: var(--color-light);
 }
 
-.task-card {
-  margin-bottom: 16px;
-}
-
 @media (max-width: 480px) {
   .search-bar {
     height: 3rem;
@@ -450,6 +424,11 @@ function handleMenuClosed(){
   .icon-search {
     height: 20px;
     width: 20px;
+  }
+
+  .add-task-btn {
+    padding: 8px 12px;
+    font-size: .8rem;
   }
 }
 </style>

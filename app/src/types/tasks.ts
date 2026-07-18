@@ -10,6 +10,6 @@ export type Task = {
   favourite: boolean
 }
 
-export type Priority = 'high' | 'medium' | 'low'
+export type Priority = 'high' | 'medium' | 'low' | 'completed'
 
 export type DueState = 'overdue' | 'today' | 'future' | 'done'

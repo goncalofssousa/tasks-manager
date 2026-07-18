@@ -1,9 +1,9 @@
 import type { Task } from "../types/tasks"
 
 const priorityRank: Record<string, number> = {
-  High: 3,
-  Medium: 2,
-  Low: 1,
+  high: 3,
+  medium: 2,
+  low: 1,
 }
 
 export function compareTasks(a: Task, b: Task) {

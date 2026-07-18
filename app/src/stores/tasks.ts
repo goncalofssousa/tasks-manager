@@ -20,7 +20,21 @@ export const useTasksStore = defineStore('tasks', {
     },
 
     mainTasks(): Task[] {
-      return this.allTasks.filter(t => t.parentId === undefined).sort(compareTasks)
+      return this.allTasks.filter(t => t.parentId === undefined)
+    },
+
+    mainTasksActive(): Task[] {
+      return this.mainTasks.filter(t => !t.done).sort(compareTasks)
+    },
+
+    mainTasksDone(): Task[] {
+      return this.mainTasks
+                 .filter(t => t.done)
+                 .sort(
+                    (a,b) => 
+                      new Date(a.doneDate ?? '').getTime() - 
+                      new Date(b.doneDate ?? '').getTime()
+                  )
     },
 
     subTasksMap(): Record<number, Task[]> {
@@ -35,10 +49,6 @@ export const useTasksStore = defineStore('tasks', {
 
         map[task.parentId].push(task)
       } 
-
-      for(const parentId in map){
-        map[parentId].sort(compareTasks)
-      }
 
       return map
     }

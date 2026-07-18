@@ -19,6 +19,7 @@ const props = defineProps<{
   task: Task
   subTasks: Task[]
   menuOpen: boolean
+  compact: boolean
 }>()
 
 const emit = defineEmits([
@@ -59,19 +60,6 @@ const priorityClass = computed(() => {
 // task state 
 const { dueState, timeSinceOverdue } = useTaskState(props.task)
 
-
-const cardStateClass = computed(() => {
-  if (props.task.done)
-    return 'completed'
-
-  if (dueState.value === 'overdue')
-    return 'overdue'
-
-  if (dueState.value === 'today')
-    return 'today'
-
-  return ''
-})
 
 // options 
 
@@ -126,7 +114,7 @@ function toggleFavourite(){
 
 <template>
 
-<div class="card" :class="[cardStateClass, {'disabled': menuOpen}]">
+<div class="card" :class="{ 'disabled': menuOpen, 'completed': task.done }">
   <div class="header">
     <div class="title-wrapper">
       <h3 class="title" :class="{ 'completed': task.done }">
@@ -164,7 +152,7 @@ function toggleFavourite(){
     </div>
   </div>
 
-  <p v-if="task.descricao" class="description" :class="{'completed': task.done}">
+  <p v-if="task.descricao && !compact" class="description" :class="{'completed': task.done}">
     {{ task.descricao }}
   </p>
 
@@ -193,7 +181,7 @@ function toggleFavourite(){
   </div>
 
 
-  <div v-if="subTasks.length" class="progress-wrapper">
+  <div v-if="subTasks.length && !compact" class="progress-wrapper">
     <div class="progress-header">
       <div class="progress-text">
         Subtasks:
@@ -216,7 +204,7 @@ function toggleFavourite(){
     </div>
   </div>
 
-  <div v-if="subTasks.length && showSubTasks" class="subtasks">
+  <div v-if="subTasks.length && showSubTasks && !compact" class="subtasks">
     <SubTaskCard
       v-for="sub in subTasks"
       :key="sub.id"
@@ -271,8 +259,11 @@ function toggleFavourite(){
 /* TASK STATES */
 
 .card.completed {
-  opacity: .6;
   border-left-color: #22c55e;
+}
+
+.card.completed:not(.disabled):hover {
+  border-color: rgba(255,255,255,.18);
   box-shadow: -2px 0 14px -6px rgba(34,197,94,.35);
 }
 
@@ -287,9 +278,6 @@ function toggleFavourite(){
   width:100%;
 }
 
-.header.completed {
-  text-decoration: line-through;
-}
 
 .title-wrapper {
   display:flex;
@@ -306,7 +294,7 @@ function toggleFavourite(){
 }
 
 .title.completed {
-  text-decoration: line-through;
+  color: var(--color-text-secondary);
 }
 
 .description {
@@ -316,9 +304,6 @@ function toggleFavourite(){
   line-height:1.5;
 }
 
-.description.completed {
-  text-decoration: line-through;
-}
 
 /* PRIORITY */
 .priority-badge {

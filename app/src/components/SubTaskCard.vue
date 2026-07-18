@@ -71,7 +71,7 @@ onClickOutside(menu, () => {
       </span>
     </div>
 
-    <div class="actions" :class="{ 'completed': subTask.done }">
+    <div class="task-actions" :class="{ 'completed': subTask.done }">
       <button ref="button" class="icon-btn" @click="toggleOptions">
         <EllipsisVertical />
       </button>

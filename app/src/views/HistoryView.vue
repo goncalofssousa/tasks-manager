@@ -10,7 +10,6 @@ import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
 import { useFilter } from '../composables/useFilter.ts'
 import Message from '../components/Message.vue'
-import '../styles/empty-state.css'
 
 const historyStore = useHistoryStore()
 const {show, text, type, openMessage} = useMessage()
@@ -257,6 +256,14 @@ function handleCancel(){
   border-color: rgba(255,255,255,.08);
 
   transform: none;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10%; 
+  gap: 15px;  
 }
 
 /* TIMELINE */

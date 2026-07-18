@@ -5,10 +5,6 @@ import type { Task } from '../types/tasks'
 export function useTaskFilters() {
 
     const filterOptions: Record<string, Filter[]> = {
-        "Status": [
-            {label: "Active", value: "active"}, 
-            {label: "Done", value: "done"}
-        ],
         "Priority": [
             {label: "High", value: "high"}, 
             {label: "Medium", value: "medium"}, 
@@ -21,7 +17,6 @@ export function useTaskFilters() {
     }
 
     const filtersValue = ref<Record<string, string[]>>({ 
-        "Status": [],
         "Priority": [],
         "Favourite": []
     })
@@ -57,13 +52,6 @@ export function useTaskFilters() {
         filtersValue.value[key] = []
     }
 
-    function matchesStatus(task: Task) {
-        return (
-            filtersValue.value.Status.length === 0 ||
-            (filtersValue.value.Status[0] === 'active' && !task.done) ||
-            (filtersValue.value.Status[0] === 'done' && task.done)
-        )
-    }
 
     function matchesPriority(task: Task) {
         return (
@@ -81,7 +69,7 @@ export function useTaskFilters() {
     }
 
     function matches(task: Task) {
-        return matchesStatus(task) && matchesPriority(task) && matchesFavourite(task)
+        return matchesPriority(task) && matchesFavourite(task)
     }
 
     const hasActiveFilters = computed(() =>{
