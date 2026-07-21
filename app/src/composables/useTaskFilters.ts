@@ -1,90 +1,101 @@
 import { ref, computed } from 'vue'
-import type { Filter } from '../types/filter'
 import type { Task } from '../types/tasks'
+import type { Filter } from '../types/filter'
+import { useTaskState } from './useTaskState'
 
 export function useTaskFilters() {
 
     const filterOptions: Record<string, Filter[]> = {
-        "Priority": [
-            {label: "High", value: "high"}, 
-            {label: "Medium", value: "medium"}, 
-            {label: "Low", value: "low"}
+        'priority': [
+            {label: 'High Priority', value: 'high'},
+            {label: 'Medium Priority', value: 'medium'},
+            {label: 'Low Priority', value: 'low'},
         ],
-        "Favourite": [
-            {label: "Favourite", value:"favourite"},
-            {label: "Non-Favourite", value:"nonFavourite"}
+        'favourite': [
+            {label: 'Favourites', value: 'favourites'},
+            {label: 'Non Favourites', value: 'nonFavourites'},
+        ],
+        'state': [
+            {label: 'Overdue', value: 'overdue'},
+            {label: 'Due Today', value: 'today'},
+            {label: 'Future', value: 'future'},
         ]
     }
 
-    const filtersValue = ref<Record<string, string[]>>({ 
-        "Priority": [],
-        "Favourite": []
-    })
+    const currentFilterValues = ref<string[]>([])
 
-    function handleFilterClick(value: string, title?: string) {
-        if (title) {
-            const index = filtersValue.value[title].indexOf(value)
-            if (index >= 0) {
-                filtersValue.value[title].splice(index, 1)
-            } else {
-                filtersValue.value[title] = [value]
-            }
+
+    function handleFilterClick(value: string) {
+        const index = currentFilterValues.value.indexOf(value)
+
+        if (index < 0) {
+            currentFilterValues.value.push(value)
+        } else {
+            currentFilterValues.value.splice(index, 1)
         }
     }
 
     function resetFilters() {
-        for(const key in filtersValue.value) {
-            filtersValue.value[key] = []
+        currentFilterValues.value = []
+    }
+
+    function removeFilter(key: string) {
+        const index = currentFilterValues.value.indexOf(key)
+        if (index >= 0) {
+            currentFilterValues.value.splice(index, 1)
         }
     }
 
-    const activeFilterChips = computed(() => {
-        const chips: Record<string, string> = {}
-        for(const entrykey in filtersValue.value) {
-            const filterValues = filtersValue.value[entrykey]
-            if(!filterValues || filterValues.length === 0) continue
-            chips[entrykey] = filterValues[0]
+    function matchesPriority(task: Task){
+        const activePriorities = currentFilterValues.value.filter(v => filterOptions['priority'].map(f => f.value).includes(v))
+        
+        if (activePriorities.length > 0 && !activePriorities.includes(task.priority || '')) {
+            return false
         }
-        return chips
-    })
 
-    function removeFilterChip(key: string){
-        filtersValue.value[key] = []
+        return true
     }
 
+    function matchesFavourites(task: Task){
+        const activeFavourites = currentFilterValues.value.filter(v => filterOptions['favourite'].map(f => f.value).includes(v))
+        
+        if (activeFavourites.length > 0) {
+            const taskFavKey = task.favourite ? 'favourites' : 'nonFavourites'
+            if (!activeFavourites.includes(taskFavKey)) return false
+        }
 
-    function matchesPriority(task: Task) {
-        return (
-            filtersValue.value.Priority.length === 0 ||
-            (task.priority && filtersValue.value.Priority[0] === task.priority)
-        )
+        return true
     }
 
-    function matchesFavourite(task: Task) {
-        return (
-            filtersValue.value.Favourite.length === 0 || 
-            (filtersValue.value.Favourite[0] === 'favourite' && task.favourite) ||
-            (filtersValue.value.Favourite[0] === 'nonFavourite' && !task.favourite) 
-        )
+    function matchesStatus(task: Task){
+        const {dueState} = useTaskState(task)
+        const activeStatus = currentFilterValues.value.filter(v => filterOptions['state'].map(f => f.value).includes(v))
+
+        if(activeStatus.length > 0){
+            if(!activeStatus.includes(dueState.value)) return false
+        }
+
+        return true
     }
 
     function matches(task: Task) {
-        return matchesPriority(task) && matchesFavourite(task)
+        return matchesPriority(task) && matchesFavourites(task) && matchesStatus(task)
     }
 
-    const hasActiveFilters = computed(() =>{
-        return Object.values(filtersValue.value).some(values => values.length > 0)
+    const hasActiveFilters = computed(() => {
+        for(const key in currentFilterValues.value){
+            if(currentFilterValues.value[key].length > 0) return true
+        }
+        return false
     })
 
-    return { 
-        filtersValue, 
-        handleFilterClick, 
-        activeFilterChips, 
-        filterOptions, 
+    return {
+        filtersValue: currentFilterValues,
+        handleFilterClick,
+        filterOptions,
         resetFilters,
-        removeFilterChip,
-        matches, 
+        removeFilter,
+        matches,
         hasActiveFilters
     }
-
 }

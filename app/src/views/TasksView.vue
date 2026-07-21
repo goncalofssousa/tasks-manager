@@ -1,57 +1,42 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, FilterIcon, X, Plus  } from 'lucide-vue-next'
+import { Search, FilterIcon, X, Plus, ArrowDownUp, Tags } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
-import type { Priority, Task } from '../types/tasks.ts'
+import type { Priority } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
-import FilterPanel from '../components/FilterPanel.vue'
 import { useTaskFilters } from '../composables/useTaskFilters.ts'
 import { useTaskModal } from '../composables/useTaskModal.ts'
 import TaskSection from '../components/TaskSection.vue'
+import TaskFilterMenu from '../components/TaskFilterMenu.vue'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
 
-// Filters 
+// Filters
 const showFilters = ref(false)
 
-const { 
+const {
   filtersValue,
-  handleFilterClick, 
+  handleFilterClick,
   resetFilters,
-  filterOptions, 
-  activeFilterChips,
-  removeFilterChip,
+  filterOptions,
+  removeFilter,
   matches,
   hasActiveFilters
 } = useTaskFilters()
 
 const search = ref('')
 
-const filteredMainTasksActive = computed(() => {
+function filterTasks(tasks: typeof store.mainTasksActive) {
   const searchText = search.value.toLowerCase()
+  return tasks.filter(t => t.title.toLowerCase().includes(searchText) && matches(t))
+}
 
-  return store.mainTasksActive
-    .filter(t => {
-      if (!t.title.toLowerCase().includes(searchText)) return false
-
-      return matches(t)
-    })
-})
-
-const filteredMainTasksDone = computed(() => {
-  const searchText = search.value.toLowerCase()
-
-  return store.mainTasksDone
-    .filter(t => {
-      if (!t.title.toLowerCase().includes(searchText)) return false
-
-      return matches(t)
-    })
-})
+const filteredMainTasksActive = computed(() => filterTasks(store.mainTasksActive))
+const filteredMainTasksDone = computed(() => filterTasks(store.mainTasksDone))
 
 // TaskModal
 const {
@@ -66,9 +51,9 @@ const {
 } = useTaskModal()
 
 function handleSubmit(task: {
-                        title: string, 
-                        descricao: string, 
-                        dueDate: string, 
+                        title: string,
+                        descricao: string,
+                        dueDate: string,
                         parentId?: number
                         priority?: Priority
                       }){
@@ -86,9 +71,16 @@ function cancelTaskCreation(msg: string){
   closeTaskModal()
   openMessage("cancel", msg)
 }
+
+
 // Confirm Modal
 const showConfirmModal = ref<boolean>(false)
 const taskToRemove = ref<number | null>(null)
+
+function handleRemoveClick(id: number) {
+  taskToRemove.value = id
+  showConfirmModal.value = true
+}
 
 function closeConfirmModal(){
   taskToRemove.value = null
@@ -107,10 +99,6 @@ function confirmDeleteTask(){
   openMessage('success', 'Task removed sucessfully')
 }
 
-function removeTask(id: number) {
-  taskToRemove.value = id
-  showConfirmModal.value = true
-}
 </script>
 
 <template>
@@ -125,71 +113,96 @@ function removeTask(id: number) {
       </button>
     </div>
 
-    <div class="search-bar">
-      <Search class="icon-search"/>
-      <input id="search" v-model="search" type="text" placeholder="Search tasks..."/>
-    </div>  
-    
-    <div class="task-toolbar">
-      <button class="filter-btn" :class="{ active: hasActiveFilters }" @click="showFilters = !showFilters">
-        <FilterIcon :size="16"/>
-        Filters
-        <span v-if="hasActiveFilters" class="filter-count">{{ activeFilterChips.length }}</span>
-      </button>
+    <div class="toolbar">
+      <div class="search-bar">
+        <Search class="icon-search" :size="18"/>
+        <input id="search" v-model="search" type="text" placeholder="Search tasks..."/>
+      </div>
 
+      <div class="sort-info">
+        <span class="sort-label">Sorted By</span>
+        <span class="sort-value">Priority</span>
+      </div>
+
+      <div class="action-anchor">
+        <div class="action-group">
+          <button class="action-btn">
+            <ArrowDownUp :size="16"/>
+            <span class="action-label">Sort</span>
+          </button>
+          <button class="action-btn" :class="{ active: hasActiveFilters }" @click="showFilters = !showFilters">
+            <FilterIcon :size="16"/>
+            <span class="action-label">Filters</span>
+            <span v-if="hasActiveFilters" class="filter-count">{{ filtersValue.length }}</span>
+          </button>
+          <button class="action-btn">
+            <Tags :size="16"/>
+            <span class="action-label">Tags</span>
+          </button>
+        </div>
+
+        <TaskFilterMenu
+          :show="showFilters"
+          :filters="filterOptions"
+          :model-value="filtersValue"
+          @close="showFilters=false"
+          @toggle-filter="handleFilterClick"
+          @reset="resetFilters"
+        />
+      </div>
+    </div>
+
+    <Transition name="chips">
       <div v-if="hasActiveFilters" class="active-chips">
-        <button v-for="(chip, value) in activeFilterChips" :key="chip" class="chip" @click="removeFilterChip(value)">
-          {{ chip.charAt(0).toUpperCase() + chip.slice(1) }}
-          <X :size="12" />
-        </button>
+        <TransitionGroup name="chip">
+          <button
+            v-for="chip in filtersValue"
+            :key="chip"
+            class="chip"
+            @click="removeFilter(chip)"
+          >
+            {{chip.charAt(0).toUpperCase() + chip.slice(1) }}
+            <X :size="12" />
+          </button>
+        </TransitionGroup>
 
         <button class="clear-all" @click="resetFilters">
           Clear all
         </button>
       </div>
-    </div>
+    </Transition>
 
-    <FilterPanel
-      :show="showFilters"
-      :filters="filterOptions"
-      :model-value="filtersValue"
-
-      @close="showFilters=false"
-      @toggle-filter="handleFilterClick"
-      @reset="resetFilters"
-    />
-
-    <TaskSection 
+    <TaskSection
       :title="'Pending'"
       :tasks="filteredMainTasksActive"
-      :has-active-filters="hasActiveFilters"
+      :has-active-filters="hasActiveFilters || search.length > 0"
       :section = "'pending'"
-      
+
       @edit-task="editTask"
       @add-sub-task="addSubTask"
-      @remove-task="removeTask"
+      @remove-task="handleRemoveClick"
       @message="openMessage"
     />
 
-    <TaskSection 
+    <TaskSection
       v-if="filteredMainTasksDone.length > 0"
       :title="'Completed'"
       :tasks="filteredMainTasksDone"
-      :has-active-filters="hasActiveFilters"
+      :has-active-filters="hasActiveFilters || search.length > 0"
       :section = "'completed'"
       @edit-task="editTask"
       @add-sub-task="addSubTask"
-      @remove-task="removeTask"
+      @remove-task="handleRemoveClick"
       @message="openMessage"
     />
 
-    
-    <TaskModal 
-      :show="showTaskModal" 
-      :mode="mode" 
-      :task="editingTask !== null ? editingTask : undefined"   
+
+    <TaskModal
+      :show="showTaskModal"
+      :mode="mode"
+      :task="editingTask !== null ? editingTask : undefined"
       :main-task-id="mainTaskId !== null ? mainTaskId : undefined"
-      @submit="handleSubmit"    
+      @submit="handleSubmit"
       @close="cancelTaskCreation('Task creation cancelled')"
     />
     <Message :show="show" :type="type" :msg="text" @close="show = false"/>
@@ -212,7 +225,7 @@ function removeTask(id: number) {
   flex-wrap: wrap;
   gap: 10px;
 
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 /* ADD BUTTON */
@@ -248,17 +261,23 @@ function removeTask(id: number) {
   transform: translateY(0);
 }
 
-.search-bar {
-  width: 100%;
-  height: 4rem; 
+/* TOOLBAR: search + actions in one cohesive row */
+.toolbar {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
+}
+
+.search-bar {
+  flex: 1;
+  min-width: 0;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
 
   gap: 10px;
 
-  padding: 10px 14px;
-  margin: 10px 0 20px;
+  padding: 0 14px;
 
   background: #18181b;
   border: 1px solid rgba(255,255,255,.08);
@@ -269,15 +288,17 @@ function removeTask(id: number) {
 }
 
 .icon-search {
-  height: 25px;
-  width: 25px;
   flex-shrink: 0;
-} 
-
+  color: var(--color-text-secondary);
+}
 
 .search-bar:focus-within {
   border-color: white;
   box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+}
+
+.search-bar:focus-within .icon-search {
+  color: white;
 }
 
 .search-bar:hover {
@@ -286,6 +307,7 @@ function removeTask(id: number) {
 
 .search-bar input {
   flex: 1;
+  min-width: 0;
 
   background: transparent;
   border: none;
@@ -302,25 +324,67 @@ function removeTask(id: number) {
   opacity: .8;
 }
 
-.task-toolbar {
+/* SORT INFO */
+.sort-info {
+  flex-shrink: 0;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  justify-content: center;
+
+  padding: 6px 16px;
+  height: 2.5rem;
+
+  border-radius: 12px;
 }
 
+.sort-label {
+  font-family: Poppins, sans-serif;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--color-text-secondary);
+}
 
-.filter-btn {
+.sort-value {
+  font-family: Poppins, sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--color-light);
+}
+
+/* ANCHOR for filters dropdown */
+.action-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Actions grouped together visually as one unit */
+.action-group {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px;
+
+  background: #18181b;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+}
+
+.action-btn {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
 
-  padding: 8px 14px;
+  padding: 8px 12px;
+  height: 2rem;
 
-  border-radius: 10px;
+  border-radius: 8px;
 
-  background: #18181b;
-  border: 1px solid rgba(255,255,255,.08);
+  background: transparent;
+  border: none;
   color: #a1a1aa;
 
   font-family: Poppins, sans-serif;
@@ -332,15 +396,13 @@ function removeTask(id: number) {
   transition: all .2s ease;
 }
 
-
-.filter-btn:hover {
-  border-color: white;
+.action-btn:hover {
+  background: rgba(255,255,255,.06);
   color: white;
 }
 
-.filter-btn.active {
-  background: rgba(255,255,255,.08);
-  border-color: white;
+.action-btn.active {
+  background: rgba(255,255,255,.1);
   color: white;
 }
 
@@ -361,11 +423,14 @@ function removeTask(id: number) {
   font-weight: 700;
 }
 
+/* CHIPS ROW */
 .active-chips {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+
+  margin-top: 12px;
 }
 
 .chip {
@@ -386,11 +451,12 @@ function removeTask(id: number) {
   font-weight: 600;
 
   cursor: pointer;
-  transition: all .2s ease;
+  transition: background .2s ease, border-color .2s ease;
 }
 
 .chip:hover {
   background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.24);
 }
 
 .clear-all {
@@ -416,19 +482,68 @@ function removeTask(id: number) {
   color: var(--color-light);
 }
 
-@media (max-width: 480px) {
+/* Transitions */
+.chips-enter-active,
+.chips-leave-active {
+  transition: all .2s ease;
+}
+
+.chips-enter-from,
+.chips-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.chip-enter-active,
+.chip-leave-active {
+  transition: all .18s ease;
+}
+
+.chip-enter-from,
+.chip-leave-to {
+  opacity: 0;
+  transform: scale(.9);
+}
+
+.chip-leave-active {
+  position: absolute;
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
   .search-bar {
+    flex: 1 1 100%;
     height: 3rem;
   }
 
-  .icon-search {
-    height: 20px;
-    width: 20px;
+  .sort-info {
+    display: none;
   }
 
-  .add-task-btn {
-    padding: 8px 12px;
-    font-size: .8rem;
+  .action-anchor {
+    flex: 1;
+  }
+
+  .action-group {
+    justify-content: space-between;
+  }
+
+  .action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .action-label {
+    display: none;
+  }
+
+  .action-btn {
+    padding: 8px;
   }
 }
 </style>

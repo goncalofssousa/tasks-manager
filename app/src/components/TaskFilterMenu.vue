@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { X, RotateCcw } from 'lucide-vue-next'
-import Filters from './Filters.vue'
-import type { Filter } from '../types/filter'
+import { X, RotateCcw, Check } from 'lucide-vue-next'
+import type { Filter } from '../types/filter';
+
 const props = defineProps<{
   show: boolean
   filters: Record<string, Filter[]>
-  modelValue: Record<string, string[]>
+  modelValue: string[]
 }>()
-
 
 const emit = defineEmits<{
   close: []
@@ -16,9 +15,12 @@ const emit = defineEmits<{
   reset: []
 }>()
 
-const hasActiveFilters = computed(() => {
-  return Object.values(props.modelValue).some(values => values.length > 0)
-})
+const hasActiveFilters = computed(() => props.modelValue.length > 0)
+
+
+function isActive(value: string) {
+  return props.modelValue.includes(value)
+}
 
 function handleFilterClick(value: string, title?: string) {
   emit('toggleFilter', value, title)
@@ -45,14 +47,23 @@ function handleFilterClick(value: string, title?: string) {
       </div>
 
       <div class="filter-body">
-          <div v-for="(filterList, filterName) in filters" :key="filterName"  class="filter-section">
-              <Filters 
-                :allFilters="filterList" 
-                :currentFilterValues="modelValue[filterName]" 
-                :title="filterName"
-                @clickedFilter="handleFilterClick"    
-              />
+        <div v-for="(filterList, groupName) in filters" :key="groupName" class="filter-group">
+          <span class="filter-title">{{ groupName }}</span>
+
+          <div class="filter-list">
+            <label
+              v-for="filter in filterList"
+              :key="filter.value"
+              class="filter-option"
+              @click.prevent="handleFilterClick(filter.value, groupName)"
+            >
+              <span class="checkbox" :class="{ checked: isActive(filter.value) }">
+                <Check v-if="isActive(filter.value)" :size="12" />
+              </span>
+              <span class="filter-label">{{ filter.label }}</span>
+            </label>
           </div>
+        </div>
       </div>
     </div>
   </Transition>
@@ -60,15 +71,25 @@ function handleFilterClick(value: string, title?: string) {
 
 <style scoped>
 .filter-panel {
-  margin: 12px 0 20px;
-  padding: 18px 20px;
+  position: absolute;
+  top: calc(100%);
+  right: 0;
+  z-index: 50;
+
+  width: 100%;
+  min-width: 260px;
+  max-height: 70vh;
+  overflow-y: auto;
+
+  margin: 0;
+  padding: 16px 18px;
 
   background: var(--color-primary-dark);
 
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,.08);
 
-  box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  box-shadow: 0 12px 32px rgba(0,0,0,.35);
 }
 
 .filter-header {
@@ -76,7 +97,7 @@ function handleFilterClick(value: string, title?: string) {
   justify-content: space-between;
   align-items: center;
 
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .filter-header h3 {
@@ -140,29 +161,73 @@ function handleFilterClick(value: string, title?: string) {
 }
 
 .filter-body {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.filter-section {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.06);
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.filter-section span {
-  display: block;
-
-  margin-bottom: 10px;
-
-  font-size: .72rem;
+.filter-title {
+  font-size: .7rem;
   font-weight: 700;
-
   color: var(--color-text-secondary);
-
   text-transform: uppercase;
   letter-spacing: .05em;
+}
+
+.filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 5px 6px;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.filter-option:hover {
+  background: rgba(255,255,255,.06);
+}
+
+.checkbox {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 16px;
+  height: 16px;
+
+  border-radius: 5px;
+  border: 1.5px solid rgba(255,255,255,.2);
+
+  color: white;
+
+  transition: all .15s ease;
+}
+
+.checkbox.checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.filter-label {
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--color-light);
 }
 
 /* transition */
@@ -178,9 +243,10 @@ function handleFilterClick(value: string, title?: string) {
 }
 
 @media (max-width: 480px) {
-  .filter-body {
-    flex-direction: column;
-    gap: 18px;
+  .filter-panel {
+    left: 0;
+    right: 0;
+    width: auto;
   }
 }
 </style>

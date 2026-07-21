@@ -1,17 +1,19 @@
 import { defineStore } from 'pinia'
 import { useHistoryStore } from './history'
-import type { Priority, Task } from '../types/tasks'
+import type { Priority, Task, Tag } from '../types/tasks'
 import { compareTasks, toDate } from '../utils/taskUtils'
 
 export type TasksData = {
   ids: number[], 
-  entities: Record<number, Task>
+  entities: Record<number, Task>, 
+  tags: Record<string, Tag>
 }
 
 export const useTasksStore = defineStore('tasks', {
   state: (): TasksData => ({
     ids: [], 
-    entities: {}
+    entities: {},
+    tags: {}
   }),
 
   getters: {
@@ -55,7 +57,7 @@ export const useTasksStore = defineStore('tasks', {
   },
 
   actions: {
-    addTask(title: string, text: string, date: string, parentId?: number, priority?: Priority) {
+    addTask(title: string, text: string, date: string, parentId?: number, priority?: Priority, tags?: string[]) {
       if (parentId !== undefined) {
         const parentTask = this.entities[parentId]
 
@@ -72,7 +74,8 @@ export const useTasksStore = defineStore('tasks', {
         dueDate: date,
         parentId, 
         priority: priority,
-        favourite: false 
+        favourite: false, 
+        tags: tags || []
       }
 
       this.ids.push(task.id)
@@ -224,6 +227,55 @@ export const useTasksStore = defineStore('tasks', {
     toggleFavourite(taskId: number){
       const task = this.entities[taskId]
       task.favourite = !task.favourite
+    }, 
+    
+    addTag(tagName: string){
+      const id = tagName.toLowerCase()
+      if(this.tags[id]) return 
+
+      const tag = {
+        key: id,
+        label: tagName
+      }
+
+      this.tags[id] = tag
+    },
+
+    deleteTag(tagName: string){
+      if(!this.tags[tagName]) return 
+
+      for(const id in this.ids){
+        const index = this.entities[id].tags.findIndex(tag => tag === tagName)
+        if(index >= 0){
+          this.entities[id].tags.splice(index, 1)
+        }
+      }
+
+      delete this.tags[tagName]
+    },
+
+    addTagToTask(tagId: string, taskId: number){
+      const tag = this.tags[tagId]
+      if(!tag) return 
+
+      const task = this.entities[taskId]
+      if(!task) return 
+
+      task.tags.push(tagId)
+    },
+
+    removeTagFromTask(tagId: string, taskId: number){
+      const tag = this.tags[tagId]
+      if(!tag) return
+
+      const task = this.entities[taskId]
+      if(!task) return 
+
+      const index = task.tags.findIndex(t => t === tagId)
+      if(index >= 0){
+        task.tags.splice(index,1)
+      }
     }
+
   }
 })

@@ -7,9 +7,16 @@ export type Task = {
   parentId?: number 
   doneDate?: string
   priority?: Priority
-  favourite: boolean
+  favourite: boolean,
+  tags: string[]
+}
+
+export type Tag = {
+  key: string, 
+  label: string
 }
 
 export type Priority = 'high' | 'medium' | 'low' | 'completed'
 
 export type DueState = 'overdue' | 'today' | 'future' | 'done'
+

@@ -58,19 +58,13 @@ function handleMenuClosed() {
 
 <template>
   <section class="task-section">
-    <header class="section-header">
+    <header v-if="isCompleted && tasks.length > 0" class="section-header">
       <div class="section-title">
         <h3>{{ title }}</h3>
         <span class="count-badge">{{ tasks.length }}</span>
       </div>
 
-      <button
-        v-if="isCompleted && tasks.length > 0"
-        type="button"
-        class="toggle-btn"
-        :aria-expanded="expanded"
-        @click.stop="toggleExpanded"
-      >
+      <button type="button" class="toggle-btn" :aria-expanded="expanded" @click.stop="toggleExpanded">
         <span class="toggle-text">{{ expanded ? 'Hide' : 'Show' }}</span>
         <ChevronDown class="chevron" :class="{ open: expanded }" :size="16"/>
       </button>

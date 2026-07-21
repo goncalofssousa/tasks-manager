@@ -152,7 +152,7 @@ function toggleFavourite(){
     </div>
   </div>
 
-  <p v-if="task.descricao && !compact" class="description" :class="{'completed': task.done}">
+  <p v-if="task.descricao" class="description" :class="{'completed': task.done}">
     {{ task.descricao }}
   </p>
 

@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useHistoryStore } from '../stores/history'
 import type { Activity, ActivityType } from '../types/history'
 import { History, PlusCircle, CheckCircle2, Trash2, RotateCcw, CalendarClock, ListChecks } from 'lucide-vue-next'
-import Filters from '../components/Filters.vue'
+import HistoryFilters from '../components/HistoryFilters.vue'
 import { formatTime, formatDate } from '../utils/formats.ts'
 import type { Filter } from '../types/filter.ts'
 import ConfirmModal from '../components/ConfirmModal.vue'
@@ -155,7 +155,7 @@ function handleCancel(){
       </button>
     </div>
 
-    <Filters  :all-filters="filterOptions" :current-filter-values="currentFilterValues" @clicked-filter="handleMultipleFilterClicked"/>
+    <HistoryFilters  :all-filters="filterOptions" :current-filter-values="currentFilterValues" @clicked-filter="handleMultipleFilterClicked"/>
   
     <div v-if="filteredHistory.length === 0" class="empty-state">
       <History :size="40" />
