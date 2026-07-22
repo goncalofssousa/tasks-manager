@@ -27,3 +27,7 @@ export function formatTime(date: string): string {
     minute: '2-digit'
   })
 }
+
+export function toDate(date?: string) {
+  return date ? new Date(date) : null
+}

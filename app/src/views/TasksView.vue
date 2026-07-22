@@ -3,7 +3,7 @@ import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { Search, FilterIcon, X, Plus, ArrowDownUp, Tags } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
-import type { Priority } from '../types/tasks.ts'
+import type { Priority, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
@@ -11,6 +11,8 @@ import { useTaskFilters } from '../composables/useTaskFilters.ts'
 import { useTaskModal } from '../composables/useTaskModal.ts'
 import TaskSection from '../components/TaskSection.vue'
 import TaskFilterMenu from '../components/TaskFilterMenu.vue'
+import TaskSortMenu from '../components/TaskSortMenu.vue'
+import { compareTasksDate, compareTasksPriority, compareTasksTitle } from '../utils/taskUtils.ts'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
@@ -35,8 +37,18 @@ function filterTasks(tasks: typeof store.mainTasksActive) {
   return tasks.filter(t => t.title.toLowerCase().includes(searchText) && matches(t))
 }
 
-const filteredMainTasksActive = computed(() => filterTasks(store.mainTasksActive))
-const filteredMainTasksDone = computed(() => filterTasks(store.mainTasksDone))
+const filteredMainTasksActive = computed(() => 
+  filterTasks(store.mainTasksActive).sort(sortOptions[sortOptionSelected.value].function)
+)
+  
+const filteredMainTasksDone = computed(() => 
+  filterTasks(store.mainTasksDone)
+  .sort(
+      (a,b) => 
+        new Date(a.doneDate ?? '').getTime() - 
+        new Date(b.doneDate ?? '').getTime()
+    )
+  )
 
 // TaskModal
 const {
@@ -99,6 +111,21 @@ function confirmDeleteTask(){
   openMessage('success', 'Task removed sucessfully')
 }
 
+// Sort 
+const showSortMenu = ref<boolean>(false)
+
+const sortOptions: Record<string, TaskComparator> = {
+  'priority': {label: 'Priority', function: compareTasksPriority}, 
+  'title': {label: 'Title (A-Z)', function: compareTasksTitle},
+  'dueDate': {label: 'Due Date', function: compareTasksDate}
+}
+
+const sortOptionSelected = ref<string>('priority')
+
+function handleToggleSort(key: string){
+  sortOptionSelected.value = key
+}
+
 </script>
 
 <template>
@@ -121,12 +148,12 @@ function confirmDeleteTask(){
 
       <div class="sort-info">
         <span class="sort-label">Sorted By</span>
-        <span class="sort-value">Priority</span>
+        <span class="sort-value">{{ sortOptions[sortOptionSelected].label }}</span>
       </div>
 
       <div class="action-anchor">
         <div class="action-group">
-          <button class="action-btn">
+          <button class="action-btn" :class="{ active: showSortMenu }" @click="showSortMenu = !showSortMenu">
             <ArrowDownUp :size="16"/>
             <span class="action-label">Sort</span>
           </button>
@@ -148,6 +175,14 @@ function confirmDeleteTask(){
           @close="showFilters=false"
           @toggle-filter="handleFilterClick"
           @reset="resetFilters"
+        />
+
+        <TaskSortMenu
+          :show="showSortMenu"
+          :sort-options="sortOptions"
+          :model-value="sortOptionSelected"
+          @close="showSortMenu = false"
+          @toggle-sort="handleToggleSort"
         />
       </div>
     </div>
@@ -239,6 +274,7 @@ function confirmDeleteTask(){
   background: #27272a;
   color: #fafafa;
 
+  font-family: Poppins, sans-serif;
   font-size: .85rem;
   font-weight: 500;
 
@@ -248,6 +284,7 @@ function confirmDeleteTask(){
 
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 

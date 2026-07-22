@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { useHistoryStore } from './history'
 import type { Priority, Task, Tag } from '../types/tasks'
-import { compareTasks, toDate } from '../utils/taskUtils'
+import { toDate } from '../utils/formats'
 
 export type TasksData = {
   ids: number[], 
@@ -26,17 +26,12 @@ export const useTasksStore = defineStore('tasks', {
     },
 
     mainTasksActive(): Task[] {
-      return this.mainTasks.filter(t => !t.done).sort(compareTasks)
+      return this.mainTasks.filter(t => !t.done)
     },
 
     mainTasksDone(): Task[] {
       return this.mainTasks
                  .filter(t => t.done)
-                 .sort(
-                    (a,b) => 
-                      new Date(a.doneDate ?? '').getTime() - 
-                      new Date(b.doneDate ?? '').getTime()
-                  )
     },
 
     subTasksMap(): Record<number, Task[]> {

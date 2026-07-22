@@ -6,17 +6,20 @@ const priorityRank: Record<string, number> = {
   low: 1,
 }
 
-export function compareTasks(a: Task, b: Task) {
+export function compareTasksPriority(a: Task, b: Task): number {
   const aPriority = priorityRank[a.priority ?? ''] ?? 0
   const bPriority = priorityRank[b.priority ?? ''] ?? 0
 
   if (aPriority !== bPriority) return bPriority - aPriority
+  return 0
+}
 
+export function compareTasksDate(a: Task, b: Task): number {
   if(a.dueDate !== '' && b.dueDate === '') return -1; 
   if(a.dueDate === '' && b.dueDate !== '') return 1; 
   return new Date(a.dueDate ?? '').getTime() - new Date(b.dueDate ?? '').getTime()
 }
 
-export function toDate(date?: string) {
-  return date ? new Date(date) : null
+export function compareTasksTitle(a: Task, b: Task): number{
+  return a.title.localeCompare(b.title)
 }

@@ -1,3 +1,4 @@
+
 export type Task = {
   id: number
   title: string,
@@ -11,12 +12,17 @@ export type Task = {
   tags: string[]
 }
 
-export type Tag = {
-  key: string, 
-  label: string
-}
-
 export type Priority = 'high' | 'medium' | 'low' | 'completed'
 
 export type DueState = 'overdue' | 'today' | 'future' | 'done'
 
+
+export type Tag = {
+  key: string,
+  label: string
+}
+
+export interface TaskComparator{
+  label: string;
+  function: (a:Task, b: Task) => number
+}
