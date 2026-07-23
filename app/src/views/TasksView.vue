@@ -13,24 +13,35 @@ import TaskSection from '../components/TaskSection.vue'
 import TaskFilterMenu from '../components/TaskFilterMenu.vue'
 import TaskSortMenu from '../components/TaskSortMenu.vue'
 import { compareTasksDate, compareTasksPriority, compareTasksTitle } from '../utils/taskUtils.ts'
+import { onClickOutside } from '@vueuse/core'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
 
-// Filters
+// Filters && search
+const search = ref('')
 const showFilters = ref(false)
+const filterMenu = ref()
+const filterButton = ref()
+
+
+onClickOutside(filterMenu, () => {
+  showFilters.value = false
+}, {
+  ignore: [filterButton]
+})
 
 const {
   filtersValue,
+  hasActiveFilters,
+  activeFilters,
   handleFilterClick,
   resetFilters,
   filterOptions,
   removeFilter,
   matches,
-  hasActiveFilters
 } = useTaskFilters()
 
-const search = ref('')
 
 function filterTasks(tasks: typeof store.mainTasksActive) {
   const searchText = search.value.toLowerCase()
@@ -42,13 +53,8 @@ const filteredMainTasksActive = computed(() =>
 )
   
 const filteredMainTasksDone = computed(() => 
-  filterTasks(store.mainTasksDone)
-  .sort(
-      (a,b) => 
-        new Date(a.doneDate ?? '').getTime() - 
-        new Date(b.doneDate ?? '').getTime()
-    )
-  )
+  filterTasks(store.mainTasksDone).sort((a,b) =>  new Date(a.doneDate ?? '').getTime() -  new Date(b.doneDate ?? '').getTime())
+)
 
 // TaskModal
 const {
@@ -114,6 +120,16 @@ function confirmDeleteTask(){
 // Sort 
 const showSortMenu = ref<boolean>(false)
 
+const sortMenu = ref()
+const sortButton = ref()
+
+onClickOutside(sortMenu, () => {
+  showSortMenu.value = false
+}, {
+  ignore: [sortButton]
+})
+
+
 const sortOptions: Record<string, TaskComparator> = {
   'priority': {label: 'Priority', function: compareTasksPriority}, 
   'title': {label: 'Title (A-Z)', function: compareTasksTitle},
@@ -153,14 +169,13 @@ function handleToggleSort(key: string){
 
       <div class="action-anchor">
         <div class="action-group">
-          <button class="action-btn" :class="{ active: showSortMenu }" @click="showSortMenu = !showSortMenu">
+          <button ref="sortButton" class="action-btn" :class="{ active: showSortMenu }" @click="showSortMenu = !showSortMenu">
             <ArrowDownUp :size="16"/>
             <span class="action-label">Sort</span>
           </button>
-          <button class="action-btn" :class="{ active: hasActiveFilters }" @click="showFilters = !showFilters">
+          <button ref="filterButton" class="action-btn" :class="{ active: showFilters }" @click="showFilters = !showFilters">
             <FilterIcon :size="16"/>
             <span class="action-label">Filters</span>
-            <span v-if="hasActiveFilters" class="filter-count">{{ filtersValue.length }}</span>
           </button>
           <button class="action-btn">
             <Tags :size="16"/>
@@ -169,6 +184,7 @@ function handleToggleSort(key: string){
         </div>
 
         <TaskFilterMenu
+          ref="filterMenu"
           :show="showFilters"
           :filters="filterOptions"
           :model-value="filtersValue"
@@ -178,6 +194,7 @@ function handleToggleSort(key: string){
         />
 
         <TaskSortMenu
+          ref="sortMenu"
           :show="showSortMenu"
           :sort-options="sortOptions"
           :model-value="sortOptionSelected"
@@ -187,25 +204,12 @@ function handleToggleSort(key: string){
       </div>
     </div>
 
-    <Transition name="chips">
-      <div v-if="hasActiveFilters" class="active-chips">
-        <TransitionGroup name="chip">
-          <button
-            v-for="chip in filtersValue"
-            :key="chip"
-            class="chip"
-            @click="removeFilter(chip)"
-          >
-            {{chip.charAt(0).toUpperCase() + chip.slice(1) }}
-            <X :size="12" />
-          </button>
-        </TransitionGroup>
-
-        <button class="clear-all" @click="resetFilters">
-          Clear all
-        </button>
-      </div>
-    </Transition>
+    <div v-if="hasActiveFilters" class="active-chips-container">
+      <button v-for="(activeFilter, index) in activeFilters" :key="index" class="chip" @click="removeFilter(activeFilter.group, activeFilter.value)">
+        {{ activeFilter.label }}
+        <X :size="12" />
+      </button>
+    </div>
 
     <TaskSection
       :title="'Pending'"
@@ -460,17 +464,39 @@ function handleToggleSort(key: string){
   font-weight: 700;
 }
 
-/* CHIPS ROW */
-.active-chips {
+.active-chips-container {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: row;
+  gap: 6px;
 
   margin-top: 12px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  white-space: nowrap;
+  padding-bottom: 4px;
+}
+
+.active-chips-container::-webkit-scrollbar {
+  height: 5px;
+}
+
+.active-chips-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.2);
+  border-radius: 999px;
+}
+
+.active-chips {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .chip {
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
   gap: 6px;
@@ -488,13 +514,14 @@ function handleToggleSort(key: string){
   font-weight: 600;
 
   cursor: pointer;
-  transition: background .2s ease, border-color .2s ease;
 }
 
 .chip:hover {
   background: rgba(255,255,255,.12);
   border-color: rgba(255,255,255,.24);
 }
+
+
 
 .clear-all {
   padding: 6px 4px;
@@ -572,6 +599,7 @@ function handleToggleSort(key: string){
     flex: 1;
     justify-content: center;
   }
+
 }
 
 @media (max-width: 420px) {

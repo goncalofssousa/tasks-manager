@@ -40,16 +40,16 @@ export function useTaskModal() {
     }
 
     return {
-    showTaskModal,
-    showConfirmModal,
-    editingTask,
-    taskToRemove,
-    mainTaskId,
-    mode,
+        showTaskModal,
+        showConfirmModal,
+        editingTask,
+        taskToRemove,
+        mainTaskId,
+        mode,
 
-    newTask,
-    addSubTask,
-    editTask,
-    closeTaskModal
+        newTask,
+        addSubTask,
+        editTask,
+        closeTaskModal
     }
 }

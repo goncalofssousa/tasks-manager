@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { Task } from '../types/tasks.ts'
 import {Calendar, EllipsisVertical} from 'lucide-vue-next'
-import { ref } from 'vue'
-import { useTaskState } from '../composables/useTaskState.ts'
+import { computed, ref } from 'vue'
 import '../styles/task-ui.css'
 import TaskOptionsMenu from './TaskOptionsMenu.vue'
 import { onClickOutside } from '@vueuse/core'
+import { getDueState, getTimeSinceOverdue } from '../utils/taskState.ts'
 
 const props = defineProps<{
   subTask: Task
@@ -18,7 +18,8 @@ const emit = defineEmits([
   'delete'
 ])
 
-const { dueState, timeSinceOverdue } = useTaskState(props.subTask)
+const dueState = computed(() => getDueState(props.subTask))
+const timeSinceOverdue = computed(() => getTimeSinceOverdue(props.subTask))
 
 
 const showOptions = ref(false)
@@ -194,5 +195,12 @@ onClickOutside(menu, () => {
 .badge.completed {
   color:#22c55e;
   background:rgba(34,197,94,.12);
+}
+
+@media (max-width: 600px) {
+  .date{
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>

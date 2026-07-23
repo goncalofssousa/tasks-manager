@@ -22,7 +22,7 @@ export type Tag = {
   label: string
 }
 
-export interface TaskComparator{
+export type TaskComparator = {
   label: string;
   function: (a:Task, b: Task) => number
 }

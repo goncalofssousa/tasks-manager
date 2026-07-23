@@ -91,7 +91,7 @@ const emit = defineEmits<{
   transform: scale(0.96);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .filters {
     flex-wrap: nowrap;
     overflow-x: auto;

@@ -10,7 +10,7 @@ import {
 } from 'lucide-vue-next'
 
 import SubTaskCard from './SubTaskCard.vue'
-import { useTaskState } from '../composables/useTaskState.ts'
+import { getDueState, getTimeSinceOverdue } from '../utils/taskState'
 import '../styles/task-ui.css'
 import TaskOptionsMenu from './TaskOptionsMenu.vue'
 
@@ -57,8 +57,8 @@ const priorityClass = computed(() => {
   return `priority-${props.task.priority.toLowerCase()}`
 })
 
-// task state 
-const { dueState, timeSinceOverdue } = useTaskState(props.task)
+const dueState = computed(() => getDueState(props.task))
+const timeSinceOverdue = computed(() => getTimeSinceOverdue(props.task))
 
 
 // options 
@@ -156,7 +156,7 @@ function toggleFavourite(){
     {{ task.descricao }}
   </p>
 
-  <div class="date" :class="dueState">
+  <div class="date">
     <div class="date-content">
       <Calendar :size="12" />
 
@@ -273,7 +273,7 @@ function toggleFavourite(){
 
   justify-content:space-between;
 
-  align-items:center;
+  align-items:flex-start;
 
   width:100%;
 }
@@ -284,6 +284,8 @@ function toggleFavourite(){
   align-items:center;
   gap:10px;
   flex-wrap:wrap;
+  min-width:0;
+  flex:1;
 }
 
 .title {
@@ -291,6 +293,8 @@ function toggleFavourite(){
   color:white;
   font-size:1.2rem;
   font-weight:600;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .title.completed {
@@ -302,6 +306,8 @@ function toggleFavourite(){
   color:var(--color-text-secondary);
   font-size:.88rem;
   line-height:1.5;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 
@@ -404,5 +410,12 @@ function toggleFavourite(){
   width:100%;
   padding-left:14px;
   border-left:2px solid rgba(255,255,255,.08);
+}
+
+@media (max-width: 600px) {
+  .date{
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>

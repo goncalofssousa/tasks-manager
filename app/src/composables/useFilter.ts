@@ -22,8 +22,5 @@ export function useFilter(){
         }
     }
 
-    function handleSingleFilterClicked(value: string) {
-        currentFilterValues.value = [value] 
-    }
-    return {currentFilterValues, handleMultipleFilterClicked, handleSingleFilterClicked}
+    return {currentFilterValues, handleMultipleFilterClicked}
 }

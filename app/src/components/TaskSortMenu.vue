@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { X } from 'lucide-vue-next';
+import { Check, X } from 'lucide-vue-next';
 import type { TaskComparator } from '../types/tasks';
 
 const props = defineProps<{

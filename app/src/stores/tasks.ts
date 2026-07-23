@@ -30,8 +30,7 @@ export const useTasksStore = defineStore('tasks', {
     },
 
     mainTasksDone(): Task[] {
-      return this.mainTasks
-                 .filter(t => t.done)
+      return this.mainTasks.filter(t => t.done)
     },
 
     subTasksMap(): Record<number, Task[]> {

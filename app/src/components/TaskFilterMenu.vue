@@ -1,28 +1,34 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { X, RotateCcw, Check } from 'lucide-vue-next'
-import type { Filter } from '../types/filter';
+import type { Filter, FilterGroup } from '../types/filter';
 
 const props = defineProps<{
   show: boolean
-  filters: Record<string, Filter[]>
-  modelValue: string[]
+  filters: Record<FilterGroup, Filter[]>
+  modelValue: Record<FilterGroup, string[]>
 }>()
 
 const emit = defineEmits<{
   close: []
-  toggleFilter: [value: string, title?: string]
+  toggleFilter: [value: string, title: FilterGroup]
   reset: []
 }>()
 
-const hasActiveFilters = computed(() => props.modelValue.length > 0)
+const hasActiveFilters = computed(() => {
+  for(const key in props.modelValue){
+    const group = key as FilterGroup
+    if(props.modelValue[group].length > 0) return true
+  }
+  return false
+})
 
 
-function isActive(value: string) {
-  return props.modelValue.includes(value)
+function isActive(section: FilterGroup, value: string) {
+  return props.modelValue[section].includes(value)
 }
 
-function handleFilterClick(value: string, title?: string) {
+function handleFilterClick(value: string, title: FilterGroup) {
   emit('toggleFilter', value, title)
 }
 </script>
@@ -57,8 +63,8 @@ function handleFilterClick(value: string, title?: string) {
               class="filter-option"
               @click.prevent="handleFilterClick(filter.value, groupName)"
             >
-              <span class="checkbox" :class="{ checked: isActive(filter.value) }">
-                <Check v-if="isActive(filter.value)" :size="12" />
+              <span class="checkbox" :class="{ checked: isActive(groupName,filter.value) }">
+                <Check v-if="isActive(groupName,filter.value)" :size="12" />
               </span>
               <span class="filter-label">{{ filter.label }}</span>
             </label>

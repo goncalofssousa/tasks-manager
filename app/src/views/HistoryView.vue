@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useHistoryStore } from '../stores/history'
-import type { Activity, ActivityType } from '../types/history'
-import { History, PlusCircle, CheckCircle2, Trash2, RotateCcw, CalendarClock, ListChecks } from 'lucide-vue-next'
+import type { Activity } from '../types/history'
+import { History, Trash2} from 'lucide-vue-next'
 import HistoryFilters from '../components/HistoryFilters.vue'
 import { formatTime, formatDate } from '../utils/formats.ts'
 import type { Filter } from '../types/filter.ts'
@@ -10,27 +10,14 @@ import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
 import { useFilter } from '../composables/useFilter.ts'
 import Message from '../components/Message.vue'
+import { getIcon, getLabel } from '../utils/historyUtils.ts'
+import { usePagination } from '../composables/usePagination.ts'
 
 const historyStore = useHistoryStore()
 const {show, text, type, openMessage} = useMessage()
-const {currentFilterValues, handleMultipleFilterClicked} = useFilter()
 
 // filters
-
-const page = ref<number>(1)
-const totalperPage = ref<number>(10)
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredHistory.value.length / totalperPage.value)
-})
-
-function nextPage(){
-  if(page.value < totalPages.value) page.value++
-}
-
-function prevPage(){
-  if(page.value > 1) page.value--
-}
+const {currentFilterValues, handleMultipleFilterClicked} = useFilter()
 
 const filterOptions: Filter[] = [
   { value: 'all', label: 'All' },
@@ -52,14 +39,11 @@ const filteredHistory = computed(() => {
   return historyStore.history.filter(activity => filters.includes(activity.type))
 })
 
-const paginatedHistory = computed(() => {
-  const startIndex = (page.value - 1) * totalperPage.value
-  const endIndex = page.value * totalperPage.value
-  return filteredHistory.value.slice(startIndex, endIndex)
-})
+// pagination
 
+const {page, totalPages, nextPage, prevPage, paginatedHistory} = usePagination(filteredHistory, 10)
 
-
+// group by label 
 const groupedHistory = computed(() => {
   const groups: Record<string, Activity[]> = {}
   for (const activity of paginatedHistory.value) {
@@ -70,61 +54,14 @@ const groupedHistory = computed(() => {
   return groups
 })
 
-function getIcon(type: ActivityType) {
-  switch (type) {
-    case 'task_created':
-      return PlusCircle
-    case 'task_completed':
-      return CheckCircle2
-    case 'task_removed':
-      return Trash2
-    case 'task_undone':
-      return RotateCcw
-    case 'deadline_changed':
-      return CalendarClock
-    default:
-      return ListChecks
-  }
-}
 
-function getLabel(activity: Activity): string {
-  switch (activity.type) {
-    case 'task_created':
-      return activity.mainTaskName 
-            ? `Created subtask "${activity.taskName}" in main task "${activity.mainTaskName}"` 
-            :`Created task "${activity.taskName}"`
-
-    case 'task_completed': 
-      return activity.mainTaskName
-            ? `Completed subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
-            : `Completed task "${activity.taskName}"`
-
-    case 'task_removed':
-      return activity.mainTaskName
-            ? `Removed subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
-            : `Removed task "${activity.taskName}"`
-
-    case 'task_undone':
-      return activity.mainTaskName
-            ? `Reopened subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
-            : `Reopened task "${activity.taskName}"`
-
-    case 'deadline_changed':
-      return activity.mainTaskName 
-              ? `Changed deadline for subtask "${activity.taskName}" in task ${activity.mainTaskName}`
-              : `Changed deadline for task "${activity.taskName}"`
-
-    default:
-      return activity.taskName
-  }
-}
+// modal
+const showModal = ref<boolean>(false)
 
 function handleClearClick(){
   showModal.value = true; 
 }
-
-const showModal = ref<boolean>(false)
-
+  
 function closeModal(){
   showModal.value = false; 
 }

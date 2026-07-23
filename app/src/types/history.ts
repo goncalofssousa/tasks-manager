@@ -5,7 +5,7 @@ export type ActivityType =
     | "task_undone"
     | "deadline_changed"
 
-export interface Activity {
+export type Activity = {
     id: number 
     type: ActivityType
     taskId: number 
