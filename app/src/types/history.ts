@@ -3,13 +3,14 @@ export type ActivityType =
     | "task_completed"
     | "task_removed"
     | "task_undone"
-    | "deadline_changed"
+    | "task_updated"
+    | "task_favourite"
+
 
 export type Activity = {
     id: number 
     type: ActivityType
-    taskId: number 
-    mainTaskName?: string
-    taskName: string
+    label: string
+    class: string
     date: string
 }

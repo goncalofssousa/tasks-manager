@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import type { Activity, ActivityType } from '../types/history'
+import type { Task } from '../types/tasks'
+import { getActivityClass, getLabel } from '../utils/historyUtils'
 
 export const useHistoryStore = defineStore('history', {
   state: () => ({
@@ -7,14 +9,13 @@ export const useHistoryStore = defineStore('history', {
   }),
 
   actions: {
-    addActivity(type: ActivityType, taskId: number, taskName: string, mainTaskName?: string) {
+    addActivity(type: ActivityType, task: Task) {
       const activity = {
         id: Date.now(),
         type: type,
-        taskId: taskId,
-        mainTaskName: mainTaskName,
-        taskName: taskName,
-        date: new Date().toISOString()
+        label: getLabel(type, task),
+        class: getActivityClass(type, task),
+        date: new Date().toISOString(),
       }
       this.history.unshift(activity)
     },  

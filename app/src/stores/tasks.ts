@@ -77,11 +77,7 @@ export const useTasksStore = defineStore('tasks', {
 
       const historyStore = useHistoryStore()
 
-      if (parentId === undefined) {
-        historyStore.addActivity("task_created",task.id,task.title)
-      } else {
-        historyStore.addActivity("task_created",task.id,task.title,this.entities[parentId].title)
-      }
+      historyStore.addActivity("task_created", task)
     },
 
     removeTask(id: number) {
@@ -93,7 +89,6 @@ export const useTasksStore = defineStore('tasks', {
       if(task.parentId === null || task.parentId === undefined) {
         this.ids = this.ids.filter(taskId => taskId !== id)
 
-        historyStore.addActivity("task_removed", id, task.title)
 
         delete this.entities[id]
 
@@ -113,8 +108,10 @@ export const useTasksStore = defineStore('tasks', {
 
         delete this.entities[id]
 
-        historyStore.addActivity("task_removed", id, task.title, this.entities[task.parentId].title) 
       }
+
+      historyStore.addActivity("task_removed", task) 
+
 
     },
 
@@ -138,9 +135,7 @@ export const useTasksStore = defineStore('tasks', {
         const parentDate = toDate(parentTask?.dueDate)
 
         if (parentDate && newDate && newDate > parentDate) {
-          throw new Error(
-            'Subtask due date cannot exceed parent task'
-          )
+          return
         }
       }
 
@@ -160,15 +155,12 @@ export const useTasksStore = defineStore('tasks', {
           }
         }
 
-        if (task.parentId !== undefined) {
-          historyStore.addActivity("deadline_changed",task.id,task.title,this.entities[task.parentId].title)
-        } else {
-          historyStore.addActivity("deadline_changed",task.id,task.title)
-        }
       }
-
       task.dueDate = updatedData.dueDate
       task.priority = updatedData.priority
+      
+      historyStore.addActivity("task_updated", task)
+
     },
 
     markAsDone(id: number) {
@@ -179,7 +171,7 @@ export const useTasksStore = defineStore('tasks', {
         task.done = true
 
         if(task.parentId !== undefined) {
-          historyStore.addActivity("task_completed", task.id, task.title, this.entities[task.parentId].title)
+          historyStore.addActivity("task_completed", task)
           return 
         }
 
@@ -191,7 +183,7 @@ export const useTasksStore = defineStore('tasks', {
           } 
         }
 
-        historyStore.addActivity("task_completed", task.id, task.title)
+        historyStore.addActivity("task_completed", task)
       }
     },
 
@@ -210,17 +202,17 @@ export const useTasksStore = defineStore('tasks', {
               mainTask.doneDate = undefined
             }
           }
-          historyStore.addActivity("task_undone", task.id, task.title, this.entities[task.parentId].title)
         }
-        else {
-          historyStore.addActivity("task_undone", task.id, task.title)
-        }
+        historyStore.addActivity("task_undone", task)
       }
     },
 
     toggleFavourite(taskId: number){
+      const historyStore = useHistoryStore()
       const task = this.entities[taskId]
       task.favourite = !task.favourite
+      if(task.favourite) historyStore.addActivity("task_favourite", task)
+      else historyStore.addActivity("task_favourite", task)
     }, 
     
     addTag(tagName: string){

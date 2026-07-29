@@ -8,16 +8,35 @@ import { formatTime, formatDate } from '../utils/formats.ts'
 import type { Filter } from '../types/filter.ts'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import { useMessage } from '../composables/useMessage.ts'
-import { useFilter } from '../composables/useFilter.ts'
 import Message from '../components/Message.vue'
-import { getIcon, getLabel } from '../utils/historyUtils.ts'
 import { usePagination } from '../composables/usePagination.ts'
+import { getIcon } from '../utils/historyUtils.ts'
 
 const historyStore = useHistoryStore()
 const {show, text, type, openMessage} = useMessage()
 
 // filters
-const {currentFilterValues, handleMultipleFilterClicked} = useFilter()
+const currentFilterValues = ref<string[]>(['all'])
+
+function handleFilterClicked(value: string) {
+  page.value = 1
+  if (value === 'all') {
+      currentFilterValues.value = ['all']
+      return
+  }
+  const index = currentFilterValues.value.indexOf(value)
+  
+  if(index < 0){
+      const indexAll = currentFilterValues.value.indexOf('all')
+      if(indexAll >= 0){
+      currentFilterValues.value.splice(indexAll,1)
+      }
+      currentFilterValues.value.push(value)
+  } else {
+      currentFilterValues.value.splice(index,1)
+      if(currentFilterValues.value.length === 0) currentFilterValues.value.push('all')
+  }
+}
 
 const filterOptions: Filter[] = [
   { value: 'all', label: 'All' },
@@ -25,7 +44,8 @@ const filterOptions: Filter[] = [
   { value: 'task_completed', label: 'Completed' },
   { value: 'task_removed', label: 'Removed' },
   { value: 'task_undone', label: 'Reopened' },
-  { value: 'deadline_changed', label: 'Deadline Changed' }
+  { value: 'task_updated', label: 'Updated' },
+  { value: 'task_favourite', label: 'Toggle Favourite' }
 ]
 
 
@@ -92,7 +112,7 @@ function handleCancel(){
       </button>
     </div>
 
-    <HistoryFilters  :all-filters="filterOptions" :current-filter-values="currentFilterValues" @clicked-filter="handleMultipleFilterClicked"/>
+    <HistoryFilters  :all-filters="filterOptions" :current-filter-values="currentFilterValues" @clicked-filter="handleFilterClicked"/>
   
     <div v-if="filteredHistory.length === 0" class="empty-state">
       <History :size="40" />
@@ -105,13 +125,13 @@ function handleCancel(){
         <div class="day-label">{{ formatDate(date) }}</div>
 
         <div class="day-items">
-          <div v-for="activity in activities" :key="activity.id" class="activity-item" :class="activity.type">
+          <div v-for="activity in activities" :key="activity.id" class="activity-item" :class="activity.class">
             <div class="activity-icon">
               <component :is="getIcon(activity.type)" :size="16" />
             </div>
 
             <div class="activity-content">
-              <p class="activity-text">{{ getLabel(activity) }}</p>
+              <p class="activity-text">{{ activity.label }}</p>
               <p class="activity-time">{{ formatTime(activity.date) }}</p>
             </div>
           </div>
@@ -259,27 +279,27 @@ function handleCancel(){
   color: var(--color-accent);
 }
 
-.activity-item.task_completed .activity-icon,
-.activity-item.subtask_completed .activity-icon {
+.activity-item.green .activity-icon {
   background: rgba(46, 204, 113, .12);
   color: #2ecc71;
 }
 
-.activity-item.task_removed .activity-icon {
+.activity-item.red .activity-icon {
   background: rgba(231, 76, 60, .12);
   color: #e74c3c;
 }
 
-.activity-item.task_undone .activity-icon,
-.activity-item.subtask_undone .activity-icon {
+.activity-item.yellow .activity-icon {
   background: rgba(241, 196, 15, .12);
   color: #f1c40f;
 }
 
-.activity-item.deadline_changed .activity-icon {
+
+.activity-item.blue .activity-icon {
   background: rgba(52, 152, 219, .12);
   color: #3498db;
 }
+
 
 .activity-content {
   flex: 1;

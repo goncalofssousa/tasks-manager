@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, FilterIcon, X, Plus, ArrowDownUp, Tags } from 'lucide-vue-next'
+import { Search, FilterIcon, X, Plus, ArrowDownUp } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
 import type { Priority, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
@@ -176,10 +176,6 @@ function handleToggleSort(key: string){
           <button ref="filterButton" class="action-btn" :class="{ active: showFilters }" @click="showFilters = !showFilters">
             <FilterIcon :size="16"/>
             <span class="action-label">Filters</span>
-          </button>
-          <button class="action-btn">
-            <Tags :size="16"/>
-            <span class="action-label">Tags</span>
           </button>
         </div>
 

@@ -39,12 +39,7 @@ function handleSortClick(key: string) {
 
       <div class="sort-body">
         <div class="sort-list">
-            <label
-                v-for="(comparator, key) in sortOptions"
-                :key="key"
-                class="sort-option"
-                @click="handleSortClick(key)"
-            >
+            <label v-for="(comparator, key) in sortOptions" :key="key" class="sort-option" @click="handleSortClick(key)">
                 <span class="checkbox" :class="{ checked: isActive(key) }">
                 <Check v-if="isActive(key)" :size="12" />
                 </span>

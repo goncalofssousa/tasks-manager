@@ -4,7 +4,6 @@ import type { ActiveFilter, Filter, FilterGroup } from '../types/filter'
 import { getDueState } from '../utils/taskState'
 
 export function useTaskFilters() {
-
     const filterOptions: Record<FilterGroup, Filter[]> = {
         'priority': [
             {label: 'High Priority', value: 'high'},

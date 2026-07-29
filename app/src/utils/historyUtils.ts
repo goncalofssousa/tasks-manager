@@ -1,5 +1,6 @@
-import { CalendarClock, CheckCircle2, ListCheck, PlusCircle, RotateCcw, Trash2 } from "lucide-vue-next"
-import type { Activity, ActivityType } from "../types/history"
+import { CheckCircle2, ListCheck, Pencil, PlusCircle, RotateCcw, Star, Trash2 } from "lucide-vue-next"
+import type { ActivityType } from "../types/history"
+import type { Task } from "../types/tasks"
 
 export function getIcon(type: ActivityType) {
   switch (type) {
@@ -11,41 +12,69 @@ export function getIcon(type: ActivityType) {
       return Trash2
     case 'task_undone':
       return RotateCcw
-    case 'deadline_changed':
-      return CalendarClock
+    case 'task_updated':
+      return Pencil
+    case 'task_favourite':
+      return Star
     default:
       return ListCheck
   }
 }
 
-export function getLabel(activity: Activity): string {
-  switch (activity.type) {
+export function getLabel(type: ActivityType, task: Task): string {
+  switch (type) {
     case 'task_created':
-      return activity.mainTaskName 
-            ? `Created subtask "${activity.taskName}" in main task "${activity.mainTaskName}"` 
-            :`Created task "${activity.taskName}"`
+      return task.parentId !== undefined  
+            ? `Created subtask "${task.title}"` 
+            :`Created task "${task.title}"`
 
     case 'task_completed': 
-      return activity.mainTaskName
-            ? `Completed subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
-            : `Completed task "${activity.taskName}"`
+      return task.parentId !== undefined
+            ? `Completed subtask "${task.title}"`
+            : `Completed task "${task.title}""`
 
     case 'task_removed':
-      return activity.mainTaskName
-            ? `Removed subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
-            : `Removed task "${activity.taskName}"`
+      return task.parentId
+            ? `Removed subtask "${task.title}"`
+            : `Removed task "${task.title}"`
 
     case 'task_undone':
-      return activity.mainTaskName
-            ? `Reopened subtask "${activity.taskName}" in main task  "${activity.mainTaskName}"`
-            : `Reopened task "${activity.taskName}"`
+      return task.parentId
+            ? `Reopened subtask "${task.title}"`
+            : `Reopened task "${task.title}"`
 
-    case 'deadline_changed':
-      return activity.mainTaskName 
-              ? `Changed deadline for subtask "${activity.taskName}" in task ${activity.mainTaskName}`
-              : `Changed deadline for task "${activity.taskName}"`
+    case 'task_updated':      
+      return task.parentId 
+              ? `Updated subtask "${task.title}"`
+              : `Updated task "${task.title}"`
+
+    case 'task_favourite':
+      return task.favourite  
+              ? `Task "${task.title}" marked as favourite`
+              : `Task "${task.title}" unmarked as favourite`
 
     default:
-      return activity.taskName
+      return task.title
   }
+}
+
+export function getActivityClass(type: ActivityType, task: Task): string {
+    switch(type) {
+      case 'task_completed': 
+       return 'green'
+      
+      case 'task_removed': 
+        return 'red'
+
+      case 'task_favourite': 
+        return task.favourite ? 'yellow' : ''
+      
+      case 'task_updated': 
+        return 'blue'
+      
+      case 'task_undone':
+          return 'yellow'
+        
+      default: return ''
+    }
 }

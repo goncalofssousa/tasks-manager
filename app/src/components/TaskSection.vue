@@ -45,6 +45,7 @@ function markAsUnDone(id: number) {
 
 function toggleFavourite(id: number) {
   store.toggleFavourite(id)
+  emit('message', 'success', 'Favourite toggled sucessfully')
 }
 
 function handleMenuOpened() {
