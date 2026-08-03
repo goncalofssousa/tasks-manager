@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, FilterIcon, X, Plus, ArrowDownUp } from 'lucide-vue-next'
+import { Search, FilterIcon, X, Plus, ArrowDownUp, Tags } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
 import type { Priority, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
@@ -14,6 +14,7 @@ import TaskFilterMenu from '../components/TaskFilterMenu.vue'
 import TaskSortMenu from '../components/TaskSortMenu.vue'
 import { compareTasksDate, compareTasksPriority, compareTasksTitle } from '../utils/taskUtils.ts'
 import { onClickOutside } from '@vueuse/core'
+import TaskTagsMenu from '../components/TaskTagsMenu.vue'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
@@ -142,6 +143,8 @@ function handleToggleSort(key: string){
   sortOptionSelected.value = key
 }
 
+// tags
+const showTags = ref<boolean>(false)
 </script>
 
 <template>
@@ -173,9 +176,15 @@ function handleToggleSort(key: string){
             <ArrowDownUp :size="16"/>
             <span class="action-label">Sort</span>
           </button>
+
           <button ref="filterButton" class="action-btn" :class="{ active: showFilters }" @click="showFilters = !showFilters">
             <FilterIcon :size="16"/>
             <span class="action-label">Filters</span>
+          </button>
+          
+          <button class="action-btn" :class="{ active: showTags }" @click="showTags = !showTags">
+            <Tags :size="16"/>
+            <span class="action-label">Tags</span>
           </button>
         </div>
 
@@ -196,6 +205,11 @@ function handleToggleSort(key: string){
           :model-value="sortOptionSelected"
           @close="showSortMenu = false"
           @toggle-sort="handleToggleSort"
+        />
+
+        <TaskTagsMenu 
+          :show="showTags"
+          @close="showTags = false"
         />
       </div>
     </div>

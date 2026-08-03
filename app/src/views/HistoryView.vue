@@ -16,6 +16,16 @@ const historyStore = useHistoryStore()
 const {show, text, type, openMessage} = useMessage()
 
 // filters
+const filterOptions: Filter[] = [
+  { value: 'all', label: 'All' },
+  { value: 'task_created', label: 'Created' },
+  { value: 'task_completed', label: 'Completed' },
+  { value: 'task_removed', label: 'Removed' },
+  { value: 'task_undone', label: 'Reopened' },
+  { value: 'task_updated', label: 'Updated' },
+  { value: 'task_favourite', label: 'Toggle Favourite' }
+]
+
 const currentFilterValues = ref<string[]>(['all'])
 
 function handleFilterClicked(value: string) {
@@ -38,16 +48,6 @@ function handleFilterClicked(value: string) {
   }
 }
 
-const filterOptions: Filter[] = [
-  { value: 'all', label: 'All' },
-  { value: 'task_created', label: 'Created' },
-  { value: 'task_completed', label: 'Completed' },
-  { value: 'task_removed', label: 'Removed' },
-  { value: 'task_undone', label: 'Reopened' },
-  { value: 'task_updated', label: 'Updated' },
-  { value: 'task_favourite', label: 'Toggle Favourite' }
-]
-
 
 const filteredHistory = computed(() => {
   const filters = currentFilterValues.value
@@ -60,7 +60,6 @@ const filteredHistory = computed(() => {
 })
 
 // pagination
-
 const {page, totalPages, nextPage, prevPage, paginatedHistory} = usePagination(filteredHistory, 10)
 
 // group by label 

@@ -111,8 +111,6 @@ export const useTasksStore = defineStore('tasks', {
       }
 
       historyStore.addActivity("task_removed", task) 
-
-
     },
 
     updateTask(id: number, updatedData: {
@@ -211,8 +209,7 @@ export const useTasksStore = defineStore('tasks', {
       const historyStore = useHistoryStore()
       const task = this.entities[taskId]
       task.favourite = !task.favourite
-      if(task.favourite) historyStore.addActivity("task_favourite", task)
-      else historyStore.addActivity("task_favourite", task)
+      historyStore.addActivity("task_favourite", task)
     }, 
     
     addTag(tagName: string){
