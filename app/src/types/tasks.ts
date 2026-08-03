@@ -9,18 +9,12 @@ export type Task = {
   doneDate?: string
   priority?: Priority
   favourite: boolean,
-  tags: string[]
 }
 
 export type Priority = 'high' | 'medium' | 'low' | 'completed'
 
 export type DueState = 'overdue' | 'today' | 'future' | 'done'
 
-
-export type Tag = {
-  key: string,
-  label: string
-}
 
 export type TaskComparator = {
   label: string;

@@ -48,7 +48,6 @@ function handleFilterClicked(value: string) {
   }
 }
 
-
 const filteredHistory = computed(() => {
   const filters = currentFilterValues.value
 

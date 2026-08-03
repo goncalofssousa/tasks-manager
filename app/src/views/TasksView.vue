@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, FilterIcon, X, Plus, ArrowDownUp, Tags } from 'lucide-vue-next'
+import { Search, FilterIcon, X, Plus, ArrowDownUp } from 'lucide-vue-next'
 import TaskModal  from '../components/TaskModal.vue'
 import type { Priority, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/Message.vue'
@@ -14,7 +14,6 @@ import TaskFilterMenu from '../components/TaskFilterMenu.vue'
 import TaskSortMenu from '../components/TaskSortMenu.vue'
 import { compareTasksDate, compareTasksPriority, compareTasksTitle } from '../utils/taskUtils.ts'
 import { onClickOutside } from '@vueuse/core'
-import TaskTagsMenu from '../components/TaskTagsMenu.vue'
 
 const store = useTasksStore()
 const {show, text, type, openMessage} = useMessage()
@@ -143,8 +142,6 @@ function handleToggleSort(key: string){
   sortOptionSelected.value = key
 }
 
-// tags
-const showTags = ref<boolean>(false)
 </script>
 
 <template>
@@ -182,10 +179,6 @@ const showTags = ref<boolean>(false)
             <span class="action-label">Filters</span>
           </button>
           
-          <button class="action-btn" :class="{ active: showTags }" @click="showTags = !showTags">
-            <Tags :size="16"/>
-            <span class="action-label">Tags</span>
-          </button>
         </div>
 
         <TaskFilterMenu
@@ -207,10 +200,6 @@ const showTags = ref<boolean>(false)
           @toggle-sort="handleToggleSort"
         />
 
-        <TaskTagsMenu 
-          :show="showTags"
-          @close="showTags = false"
-        />
       </div>
     </div>
 
@@ -320,8 +309,7 @@ const showTags = ref<boolean>(false)
 }
 
 .search-bar {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 60%;
   height: 2.5rem;
   display: flex;
   align-items: center;
@@ -406,16 +394,14 @@ const showTags = ref<boolean>(false)
 /* ANCHOR for filters dropdown */
 .action-anchor {
   position: relative;
-  flex-shrink: 0;
+  flex: 1;
 }
 
 /* Actions grouped together visually as one unit */
 .action-group {
-  flex-shrink: 0;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
-
   padding: 4px;
 
   background: #18181b;
@@ -427,7 +413,9 @@ const showTags = ref<boolean>(false)
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  width: 50%;
 
   padding: 8px 12px;
   height: 2rem;
@@ -457,23 +445,6 @@ const showTags = ref<boolean>(false)
   color: white;
 }
 
-.filter-count {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-
-  border-radius: 999px;
-  background: var(--color-accent);
-  color: white;
-
-  font-size: .7rem;
-  font-weight: 700;
-}
-
 .active-chips-container {
   display: flex;
   flex-direction: row;
@@ -497,13 +468,6 @@ const showTags = ref<boolean>(false)
   border-radius: 999px;
 }
 
-.active-chips {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
 .chip {
   flex-shrink: 0;
 
@@ -521,7 +485,7 @@ const showTags = ref<boolean>(false)
 
   font-family: Poppins, sans-serif;
   font-size: .8rem;
-  font-weight: 600;
+  font-weight: 500;
 
   cursor: pointer;
 }
@@ -530,8 +494,6 @@ const showTags = ref<boolean>(false)
   background: rgba(255,255,255,.12);
   border-color: rgba(255,255,255,.24);
 }
-
-
 
 .clear-all {
   padding: 6px 4px;
@@ -554,33 +516,6 @@ const showTags = ref<boolean>(false)
 
 .clear-all:hover {
   color: var(--color-light);
-}
-
-/* Transitions */
-.chips-enter-active,
-.chips-leave-active {
-  transition: all .2s ease;
-}
-
-.chips-enter-from,
-.chips-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-.chip-enter-active,
-.chip-leave-active {
-  transition: all .18s ease;
-}
-
-.chip-enter-from,
-.chip-leave-to {
-  opacity: 0;
-  transform: scale(.9);
-}
-
-.chip-leave-active {
-  position: absolute;
 }
 
 @media (max-width: 640px) {
