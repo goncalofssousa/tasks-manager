@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import type { Task } from '../types/tasks'
-import { computed, ref } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import type { Task } from '../../types/tasks.ts'
+import { computed, inject, ref, type Ref } from 'vue'
 import {
   ChevronDown,
-  EllipsisVertical,
-  Calendar,
   Star,
 } from 'lucide-vue-next'
 
 import SubTaskCard from './SubTaskCard.vue'
-import { getDueState, getTimeSinceOverdue } from '../utils/taskState'
-import '../styles/task-ui.css'
-import TaskOptionsMenu from './TaskOptionsMenu.vue'
+import TaskDate from './TaskDate.vue'
+import TaskActions from './TaskActions.vue'
 
+const taskMenu = inject<{
+  menuOpen: Ref<boolean>
+  setMenuOpen: (value: boolean) => void
+}>('taskMenu')!
+
+const isMenuOpen = computed(() => taskMenu.menuOpen.value)
 
 const props = defineProps<{
   task: Task
   subTasks: Task[]
-  menuOpen: boolean
   compact: boolean
 }>()
 
@@ -29,13 +30,10 @@ const emit = defineEmits([
   'edit',
   'addSubTask',
   'toggleFavourite',
-  'openedMenu',
-  'closedMenu'
 ])
 
 
 // subtasks
-
 const showSubTasks = ref(false)
 
 function toggleSubTasks() {
@@ -57,55 +55,8 @@ const priorityClass = computed(() => {
   return `priority-${props.task.priority.toLowerCase()}`
 })
 
-const dueState = computed(() => getDueState(props.task))
-const timeSinceOverdue = computed(() => getTimeSinceOverdue(props.task))
 
-
-// options 
-
-const showOptions = ref(false)
-
-function toggleOptions() {
-  showOptions.value = !showOptions.value
-  if(showOptions.value) emit('openedMenu')
-  else emit('closedMenu')
-}
-
-const button = ref()
-const menu = ref()
-
-onClickOutside(menu, () => {
-  showOptions.value = false
-  emit('closedMenu')
-}, {
-  ignore: [button]
-})
-
-function editTask() {
-  toggleOptions()
-  emit('edit', props.task)
-}
-
-function deleteTask() {
-  toggleOptions()
-  emit('delete', props.task.id)
-}
-
-function markAsDone() {
-  toggleOptions()
-  emit('done', props.task.id)
-}
-
-function markAsUndone() {
-  toggleOptions()
-  emit('undone', props.task.id)
-}
-
-function addSubTask() {
-  toggleOptions()
-  emit('addSubTask', props.task.id)
-}
-
+// options
 function toggleFavourite(){
   emit('toggleFavourite', props.task.id)
 }
@@ -113,8 +64,7 @@ function toggleFavourite(){
 
 
 <template>
-
-<div class="card" :class="{ 'disabled': menuOpen, 'completed': task.done }">
+<div class="card" :class="{ 'disabled': isMenuOpen, 'completed': task.done }">
   <div class="header">
     <div class="title-wrapper">
       <h3 class="title" :class="{ 'completed': task.done }">
@@ -126,60 +76,26 @@ function toggleFavourite(){
       </span>
     </div>
 
-    <div class="all-actions">
       <button class="icon-btn" :class="{'favourite': task.favourite}" @click="toggleFavourite">
-        <Star   :fill="task.favourite ? 'currentColor' : 'none'"
-                :stroke-width="2" :size="20"/>
+        <Star  :fill="task.favourite ? 'currentColor' : 'none'" :stroke-width="2" :size="20"/>
       </button>
 
-      <div class="task-actions" :class="{ 'completed': task.done }">
-        <button ref="button" class="icon-btn" @click="toggleOptions">
-          <EllipsisVertical :size="25"/>
-        </button>
-
-        <TaskOptionsMenu
-          ref="menu"
-          :show="showOptions"
-          :add-sub-task="true"
-          :task-done="task.done"
-          @edit="editTask"
-          @delete="deleteTask"
-          @markDone="markAsDone"
-          @markUndone="markAsUndone"
-          @addSubTask="addSubTask"
-        />
-      </div>
-    </div>
+      <TaskActions 
+        :task-done="task.done" 
+        :add-sub-task="true" 
+        @edit="emit('edit', task)"
+        @mark-done="emit('done', task.id)"
+        @mark-undone="emit('undone', task.id)"
+        @delete="emit('delete', task.id)"
+        @add-sub-task="emit('addSubTask', task.id)"
+      />
   </div>
 
   <p v-if="task.descricao" class="description" :class="{'completed': task.done}">
     {{ task.descricao }}
   </p>
 
-  <div class="date">
-    <div class="date-content">
-      <Calendar :size="12" />
-
-      <p v-if="dueState !== 'done'">
-        <strong>Due Date:</strong>
-        {{ task.dueDate || 'No date' }}
-      </p>
-
-      <p v-else>
-        <strong>Completed on:</strong>
-        {{ task.doneDate }}
-      </p>
-    </div>
-
-    <p v-if="timeSinceOverdue" class="warning overdue-warning">
-      ⚠ {{ timeSinceOverdue }}
-    </p>
-
-    <p v-else-if="dueState === 'today'" class="warning today-warning">
-      ⚠ Due today
-    </p>
-  </div>
-
+  <TaskDate v-if="task.dueDate || task.done" :task="task" /> 
 
   <div v-if="subTasks.length && !compact" class="progress-wrapper">
     <div class="progress-header">
@@ -217,8 +133,6 @@ function toggleFavourite(){
     />
   </div>
 </div>
-
-
 </template>
 
 
@@ -270,11 +184,8 @@ function toggleFavourite(){
 
 .header {
   display:flex;
-
   justify-content:space-between;
-
   align-items:flex-start;
-
   width:100%;
 }
 
@@ -299,6 +210,7 @@ function toggleFavourite(){
 
 .title.completed {
   color: var(--color-text-secondary);
+  text-decoration: line-through;
 }
 
 .description {
@@ -412,10 +324,4 @@ function toggleFavourite(){
   border-left:2px solid rgba(255,255,255,.08);
 }
 
-@media (max-width: 600px) {
-  .date{
-    display: flex;
-    flex-direction: column;
-  }
-}
 </style>

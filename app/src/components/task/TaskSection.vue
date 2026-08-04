@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, provide } from 'vue'
 import { SearchX, CircleCheckBig, ChevronDown } from 'lucide-vue-next'
 
-import { useTasksStore } from '../stores/tasks'
-import type { Task } from '../types/tasks'
+import { useTasksStore } from '../../stores/tasks.js'
+import type { Task } from '../../types/tasks.js'
 import TaskCard from './TaskCard.vue'
 
 const store = useTasksStore()
@@ -22,7 +22,6 @@ const emit = defineEmits<{
   (e: 'message', type: 'error' | 'cancel' | 'success', message: string): void
 }>()
 
-const isMenuOpen = ref(false)
 const expanded = ref(props.section === 'pending')
 
 const isCompleted = computed(() => props.section === 'completed')
@@ -48,13 +47,16 @@ function toggleFavourite(id: number) {
   emit('message', 'success', 'Favourite toggled sucessfully')
 }
 
-function handleMenuOpened() {
-  isMenuOpen.value = true
+const menuOpen = ref(false)
+
+function setMenuOpen(value: boolean) {
+  menuOpen.value = value
 }
 
-function handleMenuClosed() {
-  isMenuOpen.value = false
-}
+provide('taskMenu', {
+  menuOpen,
+  setMenuOpen
+})
 </script>
 
 <template>
@@ -93,19 +95,14 @@ function handleMenuClosed() {
         :key="task.id"
         :task="task"
         :subTasks="store.subTasksMap[task.id] || []"
-        :menu-open="isMenuOpen"
         :compact="section === 'completed'"
 
         @done="markAsDone"
         @undone="markAsUnDone"
         @toggle-favourite="toggleFavourite"
-
         @delete="$emit('removeTask', $event)"
         @edit="$emit('editTask', $event)"
         @add-sub-task="$emit('addSubTask', $event)"
-
-        @opened-menu="handleMenuOpened"
-        @closed-menu="handleMenuClosed"
       />
     </TransitionGroup>
 
@@ -249,17 +246,5 @@ function handleMenuClosed() {
 .empty-icon.success {
   background: rgba(34,197,94,.1);
   color: #22c55e;
-}
-
-/* TRANSITIONS */
-.tasks-enter-active,
-.tasks-leave-active {
-  transition: all .25s ease;
-}
-
-.tasks-enter-from,
-.tasks-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 </style>

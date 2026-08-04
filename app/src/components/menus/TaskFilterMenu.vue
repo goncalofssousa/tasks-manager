@@ -1,50 +1,74 @@
 <script setup lang="ts">
-import { Check, X } from 'lucide-vue-next';
-import type { TaskComparator } from '../types/tasks';
+import { computed } from 'vue'
+import { X, RotateCcw, Check } from 'lucide-vue-next'
+import type { Filter, FilterGroup } from '../../types/filter';
 
 const props = defineProps<{
   show: boolean
-  sortOptions: Record<string, TaskComparator>
-  modelValue: string
+  filters: Record<FilterGroup, Filter[]>
+  modelValue: Record<FilterGroup, string[]>
 }>()
 
 const emit = defineEmits<{
   close: []
-  toggleSort: [key: string]
+  toggleFilter: [value: string, title: FilterGroup]
+  reset: []
 }>()
 
+const hasActiveFilters = computed(() => {
+  for(const key in props.modelValue){
+    const group = key as FilterGroup
+    if(props.modelValue[group].length > 0) return true
+  }
+  return false
+})
 
-function isActive(key: string) {
-  return props.modelValue === key
+
+function isActive(section: FilterGroup, value: string) {
+  return props.modelValue[section].includes(value)
 }
 
-function handleSortClick(key: string) {
-  emit('toggleSort', key)
+function handleFilterClick(value: string, title: FilterGroup) {
+  emit('toggleFilter', value, title)
 }
 </script>
 
 <template>
   <Transition name="panel">
-    <div v-if="show" class="sort-panel">
+    <div v-if="show" class="filter-panel">
 
-      <div class="sort-header">
-        <h3>Sort Options</h3>
+      <div class="filter-header">
+        <h3>Filters</h3>
 
         <div class="header-actions">
+          <button v-if="hasActiveFilters" class="reset-btn" @click="$emit('reset')">
+            <RotateCcw :size="13" />
+            Clear
+          </button>
+
           <button class="close-btn" @click="$emit('close')">
             <X :size="16" />
           </button>
         </div>
       </div>
 
-      <div class="sort-body">
-        <div class="sort-list">
-            <label v-for="(comparator, key) in sortOptions" :key="key" class="sort-option" @click="handleSortClick(key)">
-                <span class="checkbox" :class="{ checked: isActive(key) }">
-                <Check v-if="isActive(key)" :size="12" />
-                </span>
-                <span class="sort-label">{{ comparator.label }}</span>
+      <div class="filter-body">
+        <div v-for="(filterList, groupName) in filters" :key="groupName" class="filter-group">
+          <span class="filter-title">{{ groupName }}</span>
+
+          <div class="filter-list">
+            <label
+              v-for="filter in filterList"
+              :key="filter.value"
+              class="filter-option"
+              @click.prevent="handleFilterClick(filter.value, groupName)"
+            >
+              <span class="checkbox" :class="{ checked: isActive(groupName,filter.value) }">
+                <Check v-if="isActive(groupName,filter.value)" :size="12" />
+              </span>
+              <span class="filter-label">{{ filter.label }}</span>
             </label>
+          </div>
         </div>
       </div>
     </div>
@@ -52,7 +76,7 @@ function handleSortClick(key: string) {
 </template>
 
 <style scoped>
-.sort-panel {
+.filter-panel {
   position: absolute;
   top: calc(100%);
   right: 0;
@@ -74,7 +98,7 @@ function handleSortClick(key: string) {
   box-shadow: 0 12px 32px rgba(0,0,0,.35);
 }
 
-.sort-header {
+.filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -82,7 +106,7 @@ function handleSortClick(key: string) {
   margin-bottom: 14px;
 }
 
-.sort-header h3 {
+.filter-header h3 {
   font-size: .95rem;
   font-weight: 600;
   color: var(--color-light);
@@ -142,19 +166,19 @@ function handleSortClick(key: string) {
   background: rgba(255,255,255,.08);
 }
 
-.sort-body {
+.filter-body {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.sort-group {
+.filter-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.sort-title {
+.filter-title {
   font-size: .7rem;
   font-weight: 700;
   color: var(--color-text-secondary);
@@ -162,13 +186,13 @@ function handleSortClick(key: string) {
   letter-spacing: .05em;
 }
 
-.sort-list {
+.filter-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.sort-option {
+.filter-option {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -180,7 +204,7 @@ function handleSortClick(key: string) {
   transition: background .15s ease;
 }
 
-.sort-option:hover {
+.filter-option:hover {
   background: rgba(255,255,255,.06);
 }
 
@@ -206,7 +230,7 @@ function handleSortClick(key: string) {
   border-color: var(--color-accent);
 }
 
-.sort-label {
+.filter-label {
   font-size: .85rem;
   font-weight: 500;
   color: var(--color-light);
@@ -225,7 +249,7 @@ function handleSortClick(key: string) {
 }
 
 @media (max-width: 480px) {
-  .sort-panel {
+  .filter-panel {
     left: 0;
     right: 0;
     width: auto;

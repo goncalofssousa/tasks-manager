@@ -1,74 +1,50 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { X, RotateCcw, Check } from 'lucide-vue-next'
-import type { Filter, FilterGroup } from '../types/filter';
+import { Check, X } from 'lucide-vue-next';
+import type { TaskComparator } from '../../types/tasks';
 
 const props = defineProps<{
   show: boolean
-  filters: Record<FilterGroup, Filter[]>
-  modelValue: Record<FilterGroup, string[]>
+  sortOptions: Record<string, TaskComparator>
+  modelValue: string
 }>()
 
 const emit = defineEmits<{
   close: []
-  toggleFilter: [value: string, title: FilterGroup]
-  reset: []
+  toggleSort: [key: string]
 }>()
 
-const hasActiveFilters = computed(() => {
-  for(const key in props.modelValue){
-    const group = key as FilterGroup
-    if(props.modelValue[group].length > 0) return true
-  }
-  return false
-})
 
-
-function isActive(section: FilterGroup, value: string) {
-  return props.modelValue[section].includes(value)
+function isActive(key: string) {
+  return props.modelValue === key
 }
 
-function handleFilterClick(value: string, title: FilterGroup) {
-  emit('toggleFilter', value, title)
+function handleSortClick(key: string) {
+  emit('toggleSort', key)
 }
 </script>
 
 <template>
   <Transition name="panel">
-    <div v-if="show" class="filter-panel">
+    <div v-if="show" class="sort-panel">
 
-      <div class="filter-header">
-        <h3>Filters</h3>
+      <div class="sort-header">
+        <h3>Sort Options</h3>
 
         <div class="header-actions">
-          <button v-if="hasActiveFilters" class="reset-btn" @click="$emit('reset')">
-            <RotateCcw :size="13" />
-            Clear
-          </button>
-
           <button class="close-btn" @click="$emit('close')">
             <X :size="16" />
           </button>
         </div>
       </div>
 
-      <div class="filter-body">
-        <div v-for="(filterList, groupName) in filters" :key="groupName" class="filter-group">
-          <span class="filter-title">{{ groupName }}</span>
-
-          <div class="filter-list">
-            <label
-              v-for="filter in filterList"
-              :key="filter.value"
-              class="filter-option"
-              @click.prevent="handleFilterClick(filter.value, groupName)"
-            >
-              <span class="checkbox" :class="{ checked: isActive(groupName,filter.value) }">
-                <Check v-if="isActive(groupName,filter.value)" :size="12" />
-              </span>
-              <span class="filter-label">{{ filter.label }}</span>
+      <div class="sort-body">
+        <div class="sort-list">
+            <label v-for="(comparator, key) in sortOptions" :key="key" class="sort-option" @click="handleSortClick(key)">
+                <span class="checkbox" :class="{ checked: isActive(key) }">
+                <Check v-if="isActive(key)" :size="12" />
+                </span>
+                <span class="sort-label">{{ comparator.label }}</span>
             </label>
-          </div>
         </div>
       </div>
     </div>
@@ -76,7 +52,7 @@ function handleFilterClick(value: string, title: FilterGroup) {
 </template>
 
 <style scoped>
-.filter-panel {
+.sort-panel {
   position: absolute;
   top: calc(100%);
   right: 0;
@@ -98,7 +74,7 @@ function handleFilterClick(value: string, title: FilterGroup) {
   box-shadow: 0 12px 32px rgba(0,0,0,.35);
 }
 
-.filter-header {
+.sort-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -106,7 +82,7 @@ function handleFilterClick(value: string, title: FilterGroup) {
   margin-bottom: 14px;
 }
 
-.filter-header h3 {
+.sort-header h3 {
   font-size: .95rem;
   font-weight: 600;
   color: var(--color-light);
@@ -166,19 +142,19 @@ function handleFilterClick(value: string, title: FilterGroup) {
   background: rgba(255,255,255,.08);
 }
 
-.filter-body {
+.sort-body {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.filter-group {
+.sort-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.filter-title {
+.sort-title {
   font-size: .7rem;
   font-weight: 700;
   color: var(--color-text-secondary);
@@ -186,13 +162,13 @@ function handleFilterClick(value: string, title: FilterGroup) {
   letter-spacing: .05em;
 }
 
-.filter-list {
+.sort-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.filter-option {
+.sort-option {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -204,7 +180,7 @@ function handleFilterClick(value: string, title: FilterGroup) {
   transition: background .15s ease;
 }
 
-.filter-option:hover {
+.sort-option:hover {
   background: rgba(255,255,255,.06);
 }
 
@@ -230,7 +206,7 @@ function handleFilterClick(value: string, title: FilterGroup) {
   border-color: var(--color-accent);
 }
 
-.filter-label {
+.sort-label {
   font-size: .85rem;
   font-weight: 500;
   color: var(--color-light);
@@ -249,7 +225,7 @@ function handleFilterClick(value: string, title: FilterGroup) {
 }
 
 @media (max-width: 480px) {
-  .filter-panel {
+  .sort-panel {
     left: 0;
     right: 0;
     width: auto;

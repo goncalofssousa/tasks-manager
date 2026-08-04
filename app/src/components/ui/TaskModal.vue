@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import type { Priority, Task } from '../types/tasks.ts'
-import { useTasksStore } from '../stores/tasks.ts';
+import type { Priority, Task } from '../../types/tasks.ts'
+import { useTasksStore } from '../../stores/tasks.ts';
 
 const tasksStore = useTasksStore()
 

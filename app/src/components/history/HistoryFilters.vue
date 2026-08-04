@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Filter } from '../types/filter'
+import type { Filter } from '../../types/filter'
 
 const props = defineProps<{
   allFilters: Filter[]

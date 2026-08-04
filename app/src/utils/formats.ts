@@ -21,10 +21,20 @@ export function formatDate(date: string): string {
   })
 }
 
+export function formatSimple(date: string): string {
+  const inputDate = new Date(date)
+  return inputDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: 'numeric',
+  });
+}
+
+
 export function formatTime(date: string): string {
   return new Date(date).toLocaleTimeString('pt-PT', {
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 
