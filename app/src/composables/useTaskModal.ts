@@ -3,7 +3,6 @@ import type { Task } from "../types/tasks"
 
 export function useTaskModal() {
     const showTaskModal = ref(false)
-    const showConfirmModal = ref(false)
 
     const editingTask = ref<Task | null>(null)
     const taskToRemove = ref<number | null>(null)
@@ -41,7 +40,6 @@ export function useTaskModal() {
 
     return {
         showTaskModal,
-        showConfirmModal,
         editingTask,
         taskToRemove,
         mainTaskId,

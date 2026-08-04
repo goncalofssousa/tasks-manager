@@ -49,7 +49,8 @@ const progress = computed(() =>
 )
 
 // priotiy class
-const priorityClass = computed(() => {
+const stateClass = computed(() => {
+  if(props.task.done) return 'completed'
   if (!props.task.priority) return ''
 
   return `priority-${props.task.priority.toLowerCase()}`
@@ -64,14 +65,14 @@ function toggleFavourite(){
 
 
 <template>
-<div class="card" :class="{ 'disabled': isMenuOpen, 'completed': task.done }">
+<div class="card" :class="[stateClass, { 'disabled': isMenuOpen}]">
   <div class="header">
     <div class="title-wrapper">
       <h3 class="title" :class="{ 'completed': task.done }">
         {{ task.title }}
       </h3>
 
-      <span v-if="task.priority || task.done" class="priority-badge" :class="{ [priorityClass]: !task.done, 'priority-completed': task.done }">
+      <span v-if="task.priority || task.done" class="priority-badge" :class="stateClass">
         {{ !task.done ? `${task.priority} Priority` : 'Completed' }}
       </span>
     </div>
@@ -91,7 +92,7 @@ function toggleFavourite(){
       />
   </div>
 
-  <p v-if="task.descricao" class="description" :class="{'completed': task.done}">
+  <p v-if="task.descricao && !compact" class="description" :class="{'completed': task.done}">
     {{ task.descricao }}
   </p>
 
@@ -108,7 +109,7 @@ function toggleFavourite(){
 
       <button class="toggle-btn" @click="toggleSubTasks">
         <ChevronDown :size="16" class="chevron" :class="{ rotated: showSubTasks }"/>
-        <span class="toggle-text">
+        <span>
           {{ showSubTasks ? 'Hide' : 'See' }}
         </span>
 
@@ -169,26 +170,12 @@ function toggleFavourite(){
     0 0 24px rgba(255,255,255,.03);
 }
 
-
-/* TASK STATES */
-
-.card.completed {
-  border-left-color: #22c55e;
-}
-
-.card.completed:not(.disabled):hover {
-  border-color: rgba(255,255,255,.18);
-  box-shadow: -2px 0 14px -6px rgba(34,197,94,.35);
-}
-
-
 .header {
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
   width:100%;
 }
-
 
 .title-wrapper {
   display:flex;
@@ -208,10 +195,6 @@ function toggleFavourite(){
   word-break: break-word;
 }
 
-.title.completed {
-  color: var(--color-text-secondary);
-  text-decoration: line-through;
-}
 
 .description {
   margin:0;
@@ -222,8 +205,6 @@ function toggleFavourite(){
   word-break: break-word;
 }
 
-
-/* PRIORITY */
 .priority-badge {
   padding:3px 10px;
   border-radius:999px;
@@ -232,27 +213,6 @@ function toggleFavourite(){
   letter-spacing:.08em;
   text-transform:uppercase;
 }
-
-.priority-high {
-  color:#ef4444;
-  background:rgba(239,68,68,.12);
-}
-.priority-medium {
-  color:#f59e0b;
-  background:rgba(245,158,11,.12);
-}
-
-.priority-low {
-  color:#3b82f6;
-  background:rgba(59,130,246,.12);
-}
-
-.priority-completed {
-  color:#22c55e;
-  background:rgba(34,197,94,.12);
-}
-
-/* PROGRESS */
 
 .progress-wrapper {
   width:100%;
@@ -302,18 +262,9 @@ function toggleFavourite(){
   transition:.25s;
 }
 
-
 .chevron.rotated {
   transform:rotate(180deg);
 }
-
-.all-actions  {
-  display: flex;
-  flex-direction: row;
-}
-
-
-/* SUBTASKS */
 
 .subtasks {
   display:flex;
@@ -324,4 +275,62 @@ function toggleFavourite(){
   border-left:2px solid rgba(255,255,255,.08);
 }
 
+/* TASK STATES — cor única por estado, tudo o resto deriva daqui */
+
+.card.priority-high {
+  --priority-accent: var(--color-priority-high, #ef4444);
+}
+.card.priority-medium {
+  --priority-accent: var(--color-priority-medium, #f59e0b);
+}
+.card.priority-low {
+  --priority-accent: var(--color-priority-low, #3b82f6);
+}
+.card.completed {
+  --priority-accent: var(--color-priority-completed, #22c55e);
+}
+
+.card.priority-high,
+.card.priority-medium,
+.card.priority-low,
+.card.completed {
+  border-left-color: color-mix(in srgb, var(--priority-accent) 50%, black);
+}
+
+.card.priority-high:not(.disabled):hover,
+.card.priority-medium:not(.disabled):hover,
+.card.priority-low:not(.disabled):hover,
+.card.completed:not(.disabled):hover {
+  border-color: rgba(255,255,255,.18);
+  border-left-color: var(--priority-accent);
+
+  box-shadow:
+    0 0 12px rgba(255,255,255,.05),
+    -2px 0 14px -6px color-mix(in srgb, var(--priority-accent) 65%, transparent);
+}
+
+.title.completed {
+  color: var(--color-text-secondary);
+  text-decoration: line-through;
+}
+
+.priority-badge.priority-high {
+  color: var(--color-priority-high, #ef4444);
+  background: color-mix(in srgb, var(--color-priority-high, #ef4444) 12%, transparent);
+}
+
+.priority-badge.priority-medium {
+  color: var(--color-priority-medium, #f59e0b);
+  background: color-mix(in srgb, var(--color-priority-medium, #f59e0b) 12%, transparent);
+}
+
+.priority-badge.priority-low {
+  color: var(--color-priority-low, #3b82f6);
+  background: color-mix(in srgb, var(--color-priority-low, #3b82f6) 12%, transparent);
+}
+
+.priority-badge.completed {
+  color: var(--color-priority-completed, #22c55e);
+  background: color-mix(in srgb, var(--color-priority-completed, #22c55e) 12%, transparent);
+}
 </style>
