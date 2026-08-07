@@ -3,7 +3,7 @@ import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { Search, FilterIcon, X, Plus, ArrowDownUp } from 'lucide-vue-next'
 import TaskModal  from '../components/ui/TaskModal.vue'
-import type { Priority, TaskComparator } from '../types/tasks.ts'
+import type { Priority, SortOption, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/ui/Message.vue'
 import ConfirmModal from '../components/ui/ConfirmModal.vue'
 import { useMessage} from '../composables/useMessage.ts'
@@ -19,8 +19,8 @@ const store = useTasksStore()
 const message = useMessage()
 
 // Filters && search
-const search = ref('')
-const showFilters = ref(false)
+const search = ref<string>('')
+const showFilters = ref<boolean>(false)
 const filterMenu = ref()
 const filterButton = ref()
 
@@ -130,15 +130,15 @@ onClickOutside(sortMenu, () => {
 })
 
 
-const sortOptions: Record<string, TaskComparator> = {
+const sortOptions: Record<SortOption, TaskComparator> = {
   'priority': {label: 'Priority', function: compareTasksPriority}, 
   'title': {label: 'Title (A-Z)', function: compareTasksTitle},
   'dueDate': {label: 'Due Date', function: compareTasksDate}
 }
 
-const sortOptionSelected = ref<string>('priority')
+const sortOptionSelected = ref<SortOption>('priority')
 
-function handleToggleSort(key: string){
+function handleToggleSort(key: SortOption){
   sortOptionSelected.value = key
 }
 
@@ -300,7 +300,6 @@ function handleToggleSort(key: string){
   transform: translateY(0);
 }
 
-/* TOOLBAR: search + actions in one cohesive row */
 .toolbar {
   display: flex;
   align-items: center;
@@ -308,7 +307,7 @@ function handleToggleSort(key: string){
 }
 
 .search-bar {
-  flex: 0 0 60%;
+  flex: 2;
   height: 2.5rem;
   display: flex;
   align-items: center;

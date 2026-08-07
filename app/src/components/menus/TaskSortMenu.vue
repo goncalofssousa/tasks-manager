@@ -1,24 +1,24 @@
 <script setup lang="ts">
 import { Check, X } from 'lucide-vue-next';
-import type { TaskComparator } from '../../types/tasks';
+import type { SortOption, TaskComparator } from '../../types/tasks';
 
 const props = defineProps<{
   show: boolean
-  sortOptions: Record<string, TaskComparator>
-  modelValue: string
+  sortOptions: Record<SortOption, TaskComparator>
+  modelValue: SortOption
 }>()
 
 const emit = defineEmits<{
   close: []
-  toggleSort: [key: string]
+  toggleSort: [key: SortOption]
 }>()
 
 
-function isActive(key: string) {
+function isActive(key: SortOption) {
   return props.modelValue === key
 }
 
-function handleSortClick(key: string) {
+function handleSortClick(key: SortOption) {
   emit('toggleSort', key)
 }
 </script>
@@ -214,7 +214,7 @@ function handleSortClick(key: string) {
 /* transition */
 .panel-enter-active,
 .panel-leave-active {
-  transition: all .2s ease;
+  transition: all .5s ease;
 }
 
 .panel-enter-from,

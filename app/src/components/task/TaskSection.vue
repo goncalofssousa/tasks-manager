@@ -60,57 +60,67 @@ provide('taskMenu', {
 </script>
 
 <template>
-  <section class="task-section">
-    <header v-if="isCompleted && tasks.length > 0" class="section-header">
-      <div class="section-title">
-        <h3>{{ title }}</h3>
-        <span class="count-badge">{{ tasks.length }}</span>
-      </div>
-
-      <button type="button" class="toggle-btn" :aria-expanded="expanded" @click.stop="toggleExpanded">
-        <span class="toggle-text">{{ expanded ? 'Hide' : 'Show' }}</span>
-        <ChevronDown class="chevron" :class="{ open: expanded }" :size="16"/>
-      </button>
-    </header>
-
-    <div v-if="tasks.length === 0 && section==='pending'" class="empty-state">
-      <template v-if="hasActiveFilters">
-        <div class="empty-icon">
-          <SearchX :size="32" />
+  <section>
+      <header v-if="isCompleted && tasks.length > 0" class="section-header">
+        <div class="section-title">
+          <h3>{{ title }}</h3>
+          <span class="count-badge">{{ tasks.length }}</span>
         </div>
-        <p>No tasks match these filters.</p>
-      </template>
 
-      <template v-else>
-        <div class="empty-icon success">
-          <CircleCheckBig :size="32" />
+        <button type="button" class="toggle-btn" :aria-expanded="expanded" @click.stop="toggleExpanded">
+          <span class="toggle-text">{{ expanded ? 'Hide' : 'Show' }}</span>
+          <ChevronDown class="chevron" :class="{ open: expanded }" :size="16"/>
+        </button>
+      </header>
+
+      <Transition name="fade" mode="out-in">
+        <div v-if="tasks.length === 0 && section === 'pending'" key="empty" class="empty-state">
+          <template v-if="hasActiveFilters">
+            <div class="empty-icon">
+              <SearchX :size="32" />
+            </div>
+
+            <p>
+              No tasks match these filters.
+            </p>
+          </template>
+
+          <template v-else>
+            <div class="empty-icon success">
+              <CircleCheckBig :size="32" />
+            </div>
+
+            <p>
+              Enjoy your free time — nothing pending.
+            </p>
+          </template>
         </div>
-        <p>Enjoy your free time — nothing pending.</p>
-      </template>
-    </div>
 
-    <TransitionGroup v-else-if="expanded" name="tasks" tag="div" class="tasks">
-      <TaskCard
-        v-for="task in tasks"
-        :key="task.id"
-        :task="task"
-        :subTasks="store.subTasksMap[task.id] || []"  
-        :compact="section === 'completed'"
 
-        @done="markAsDone"
-        @undone="markAsUnDone"
-        @toggle-favourite="toggleFavourite"
-        @delete="$emit('removeTask', $event)"
-        @edit="$emit('editTask', $event)"
-        @add-sub-task="$emit('addSubTask', $event)"
-      />
-    </TransitionGroup>
+        <TransitionGroup v-else-if="expanded" key="tasks" name="tasks" tag="div" class="tasks">
+          <TaskCard
+            v-for="task in tasks"
+            :key="task.id"
 
-  </section>
+            :task="task"
+            :subTasks="store.subTasksMap[task.id] || []"
+            :compact="section === 'completed'"
+
+            @done="markAsDone"
+            @undone="markAsUnDone"
+            @toggle-favourite="toggleFavourite"
+            @delete="$emit('removeTask', $event)"
+            @edit="$emit('editTask', $event)"
+            @add-sub-task="$emit('addSubTask', $event)"
+          />
+        </TransitionGroup>
+
+      </Transition>
+    </section>
 </template>
 
 <style scoped>
-.task-section {
+section {
   margin-top: 1rem;
 }
 
@@ -246,5 +256,42 @@ provide('taskMenu', {
 .empty-icon.success {
   background: rgba(34,197,94,.1);
   color: #22c55e;
+}
+
+
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity .25s ease,
+    transform .25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.tasks-enter-active,
+.tasks-leave-active {
+  transition:
+    opacity .25s ease,
+    transform .25s ease;
+}
+
+
+.tasks-enter-from {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+
+.tasks-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.tasks-move {
+  transition: transform .25s ease;
 }
 </style>

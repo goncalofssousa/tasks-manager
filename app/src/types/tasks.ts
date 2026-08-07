@@ -1,4 +1,3 @@
-
 export type Task = {
   id: number
   title: string,
@@ -15,6 +14,9 @@ export type Priority = 'high' | 'medium' | 'low' | 'completed'
 
 export type DueState = 'overdue' | 'today' | 'future' | 'done'
 
+export type ModalAction = 'create' | 'edit' | 'new-sub-task'
+
+export type SortOption = 'priority' | 'title' | 'dueDate'
 
 export type TaskComparator = {
   label: string;

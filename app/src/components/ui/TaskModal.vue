@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import type { Priority, Task } from '../../types/tasks.ts'
+import type { ModalAction, Priority, Task } from '../../types/tasks.ts'
 import { useTasksStore } from '../../stores/tasks.ts';
 
 const tasksStore = useTasksStore()
 
 const props = defineProps<{
   show: boolean
-  mode: 'create' | 'edit' | 'new-sub-task'
+  mode: ModalAction
   task?: Task
   mainTaskId?: number
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'submit', payload: { title: string; descricao: string; dueDate: string, parentId?: number, priority: Priority | undefined }): void
+  (e: 'submit', payload: { title: string; descricao: string; dueDate: string, parentId?: number, priority?: Priority  }): void
 }>()
 
 const title = ref<string>('')
@@ -142,7 +142,7 @@ function submit() {
         </div>
 
         <div v-if="mode !== 'new-sub-task' && mainTaskId === undefined" class="form-group">
-          <label>Priority</label>
+          <p>Priority</p>
           <div class="priority-picker">
             <button 
               v-for="option in ['low', 'medium', 'high']" 
@@ -159,7 +159,6 @@ function submit() {
         </div>
 
         <div class="modal-actions">
-
           <button type="button" class="modal-btn cancel" @click="$emit('close')">
             Cancel
           </button>
@@ -167,7 +166,6 @@ function submit() {
           <button type="submit" class="modal-btn confirm" :disabled="!canSend">
             {{ modalSubmitButtonText }}
           </button>
-
         </div>
 
       </form>
@@ -218,7 +216,7 @@ function submit() {
   gap: 8px;
 }
 
-.form-group label {
+.form-group label, p {
   font-size: .9rem;
   font-weight: 500;
   color: var(--color-text-secondary);
