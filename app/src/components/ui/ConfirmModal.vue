@@ -15,7 +15,6 @@ const emit = defineEmits<{
   <div v-if="show" class="overlay">
     <div class="modal">
       <div class="confirm-modal">
-
           <div class="confirm-icon">
               ⚠️
           </div>

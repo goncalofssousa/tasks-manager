@@ -65,6 +65,8 @@ watch(() => props.show, (open) => {
   priority.value = undefined
 })
 
+
+
 const canSend = computed(() => {
   return (title.value.trim() !== '' && dueDateError.value === '')
 })
@@ -125,7 +127,7 @@ function submit() {
 
         <div class="form-group">
           <label for="desc">Description</label>
-          <textarea id="desc" v-model="descricao" rows="4" placeholder="Describe your task..."></textarea>
+          <textarea id="desc" v-model="descricao" placeholder="Describe your task..."></textarea>
         </div>
 
         <div class="form-group">
@@ -191,6 +193,8 @@ function submit() {
 .modal {
   width: 100%;
   max-width: 420px;
+  max-height: 70vh;
+  overflow-y: auto;
 
   background: var(--color-primary-dark);
   border-radius: 14px;
@@ -314,10 +318,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: all .2s ease;
 }
 
-.priority-option input {
-  display: none;
-}
-
 .priority-option:hover {
   color: white;
   border-color: rgba(255,255,255,.18);
@@ -385,4 +385,5 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     max-width: 320px;
   }
 }
+
 </style>

@@ -2,11 +2,9 @@
 import { computed } from 'vue'
 import { Check } from 'lucide-vue-next'
 import type { Task } from '../../types/tasks'
-import StatusBadge from './StatusBadge.vue'
 
 const props = defineProps<{
   item: Task
-  isTask: boolean
 }>()
 
 const emit = defineEmits<{
@@ -14,9 +12,21 @@ const emit = defineEmits<{
   (e: 'undone', id: number): void
 }>()
 
+const isTask = computed(() => props.item.parentId === undefined)
+
 const showBadge = computed(() =>
-  props.isTask ? (props.item.priority || props.item.done) : props.item.done
+  isTask ? (props.item.priority || props.item.done) : props.item.done
 )
+
+const label = computed(() =>
+  props.item.done ? 'Completed' : `${props.item.priority} Priority`
+)
+
+const stateClass = computed(() => {
+  if (props.item.done) return 'completed'
+  if (!props.item.priority) return ''
+  return `priority-${props.item.priority?.toLowerCase()}`
+})
 
 function toggle() {
     if(props.item.done) emit('undone', props.item.id)
@@ -34,8 +44,7 @@ function toggle() {
       {{ item.title }}
     </component>
 
-    <StatusBadge v-if="showBadge" :done="item.done" :priority="isTask ? item.priority : undefined"
-    />
+    <span v-if="showBadge" class="status-badge" :class="stateClass">{{ label }}</span>
   </div>
 </template>
 
@@ -103,6 +112,36 @@ function toggle() {
 .check-button.checked:hover {
   background: #16a34a;
   border-color: #16a34a;
+}
+
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.status-badge.priority-high {
+  color: var(--color-priority-high, #ef4444);
+  background: color-mix(in srgb, var(--color-priority-high, #ef4444) 12%, transparent);
+}
+
+.status-badge.priority-medium {
+  color: var(--color-priority-medium, #f59e0b);
+  background: color-mix(in srgb, var(--color-priority-medium, #f59e0b) 12%, transparent);
+}
+
+.status-badge.priority-low {
+  color: var(--color-priority-low, #3b82f6);
+  background: color-mix(in srgb, var(--color-priority-low, #3b82f6) 12%, transparent);
+}
+
+.status-badge.completed {
+  color: var(--color-priority-completed, #22c55e);
+  background: color-mix(in srgb, var(--color-priority-completed, #22c55e) 12%, transparent);
 }
 
 @media (max-width: 640px) {

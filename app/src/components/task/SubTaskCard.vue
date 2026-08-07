@@ -2,7 +2,7 @@
 import type { Task } from '../../types/tasks.ts'
 import TaskDate from './TaskDate.vue'
 import TaskActions from './TaskActions.vue'
-import TaskTitleRow from './TaskTitleRow.vue'
+import TaskTitleRow from './TaskTitle.vue'
 
 const props = defineProps<{
   subTask: Task

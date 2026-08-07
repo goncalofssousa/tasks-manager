@@ -17,7 +17,6 @@ const timeSinceOverdue = computed(() => getTimeSinceOverdue(props.task))
     <div class="date">
         <div class="date-content">
             <Calendar :size="12" />
-
             <p v-if="!task.done && task.dueDate">
                 <strong>Due Date:</strong>
                 {{ formatSimple(task.dueDate) }}

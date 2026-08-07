@@ -5,7 +5,7 @@ import { ChevronDown, Star } from 'lucide-vue-next'
 import SubTaskCard from './SubTaskCard.vue'
 import TaskDate from './TaskDate.vue'
 import TaskActions from './TaskActions.vue'
-import TaskTitleRow from './TaskTitleRow.vue'
+import TaskTitleRow from './TaskTitle.vue'
 
 const taskMenu = inject<{
   menuOpen: Ref<boolean>

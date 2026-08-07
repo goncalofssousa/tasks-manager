@@ -9,7 +9,7 @@ import ConfirmModal from '../components/ui/ConfirmModal.vue'
 import { useMessage} from '../composables/useMessage.ts'
 import { useTaskFilters } from '../composables/useTaskFilters.ts'
 import { useTaskModal } from '../composables/useTaskModal.ts'
-import TaskSection from '../components/task/TaskSection.vue'
+import TaskSection from '../components/ui/TaskSection.vue'
 import TaskFilterMenu from '../components/menus/TaskFilterMenu.vue'
 import TaskSortMenu from '../components/menus/TaskSortMenu.vue'
 import { compareTasksDate, compareTasksPriority, compareTasksTitle } from '../utils/taskUtils.ts'
@@ -146,94 +146,94 @@ function handleToggleSort(key: SortOption){
 
 <template>
   <div class="page">
+    <div :inert="showTaskModal || showConfirmModal">
+      <div class="header">
+        <h1>Tasks</h1>
 
-    <div class="header">
-      <h1>Tasks</h1>
-
-      <button class="add-task-btn" @click="newTask">
-        <Plus :size="16"/>
-        Add Task
-      </button>
-    </div>
-
-    <div class="toolbar">
-      <div class="search-bar">
-        <Search class="icon-search" :size="18"/>
-        <input id="search" v-model="search" type="text" placeholder="Search tasks..."/>
+        <button class="add-task-btn" @click="newTask">
+          <Plus :size="16"/>
+          Add Task
+        </button>
       </div>
 
-      <div class="sort-info">
-        <span class="sort-label">Sorted By</span>
-        <span class="sort-value">{{ sortOptions[sortOptionSelected].label }}</span>
-      </div>
-
-      <div class="action-anchor">
-        <div class="action-group">
-          <button ref="sortButton" class="action-btn" :class="{ active: showSortMenu }" @click="showSortMenu = !showSortMenu">
-            <ArrowDownUp :size="16"/>
-            <span class="action-label-full">Sort</span>
-            <span class="action-label-compact">{{ sortOptions[sortOptionSelected].label }}</span>
-          </button>
-
-          <button ref="filterButton" class="action-btn" :class="{ active: showFilters }" @click="showFilters = !showFilters">
-            <FilterIcon :size="16"/>
-            <span>Filters</span>
-          </button>
+      <div class="toolbar">
+        <div class="search-bar">
+          <Search class="icon-search" :size="18"/>
+          <input id="search" v-model="search" type="text" placeholder="Search tasks..."/>
         </div>
 
-        <TaskFilterMenu
-          ref="filterMenu"
-          :show="showFilters"
-          :filters="filterOptions"
-          :model-value="filtersValue"
-          @close="showFilters=false"
-          @toggle-filter="handleFilterClick"
-          @reset="resetFilters"
-        />
+        <div class="sort-info">
+          <span class="sort-label">Sorted By</span>
+          <span class="sort-value">{{ sortOptions[sortOptionSelected].label }}</span>
+        </div>
 
-        <TaskSortMenu
-          ref="sortMenu"
-          :show="showSortMenu"
-          :sort-options="sortOptions"
-          :model-value="sortOptionSelected"
-          @close="showSortMenu = false"
-          @toggle-sort="handleToggleSort"
-        />
+        <div class="action-anchor">
+          <div class="action-group">
+            <button ref="sortButton" class="action-btn" :class="{ active: showSortMenu }" @click="showSortMenu = !showSortMenu">
+              <ArrowDownUp :size="16"/>
+              <span class="action-label-full">Sort</span>
+              <span class="action-label-compact">{{ sortOptions[sortOptionSelected].label }}</span>
+            </button>
 
+            <button ref="filterButton" class="action-btn" :class="{ active: showFilters }" @click="showFilters = !showFilters">
+              <FilterIcon :size="16"/>
+              <span>Filters</span>
+            </button>
+          </div>
+
+          <TaskFilterMenu
+            ref="filterMenu"
+            :show="showFilters"
+            :filters="filterOptions"
+            :model-value="filtersValue"
+            @close="showFilters=false"
+            @toggle-filter="handleFilterClick"
+            @reset="resetFilters"
+          />
+
+          <TaskSortMenu
+            ref="sortMenu"
+            :show="showSortMenu"
+            :sort-options="sortOptions"
+            :model-value="sortOptionSelected"
+            @close="showSortMenu = false"
+            @toggle-sort="handleToggleSort"
+          />
+
+        </div>
       </div>
+
+      <div v-if="hasActiveFilters" class="active-chips-container">
+        <button v-for="(activeFilter, index) in activeFilters" :key="index" class="chip" @click="removeFilter(activeFilter.group, activeFilter.value)">
+          {{ activeFilter.label }}
+          <X :size="12" />
+        </button>
+      </div>
+
+      <TaskSection
+        :title="'Pending'"
+        :tasks="filteredMainTasksActive"
+        :has-active-filters="hasActiveFilters || search.length > 0"
+        :section = "'pending'"
+
+        @edit-task="editTask"
+        @add-sub-task="addSubTask"
+        @remove-task="handleRemoveClick"
+        @message="message.openMessage"
+      />
+
+      <TaskSection
+        v-if="filteredMainTasksDone.length > 0"
+        :title="'Completed'"
+        :tasks="filteredMainTasksDone"
+        :has-active-filters="hasActiveFilters || search.length > 0"
+        :section = "'completed'"
+        @edit-task="editTask"
+        @add-sub-task="addSubTask"
+        @remove-task="handleRemoveClick"
+        @message="message.openMessage"
+      />
     </div>
-
-    <div v-if="hasActiveFilters" class="active-chips-container">
-      <button v-for="(activeFilter, index) in activeFilters" :key="index" class="chip" @click="removeFilter(activeFilter.group, activeFilter.value)">
-        {{ activeFilter.label }}
-        <X :size="12" />
-      </button>
-    </div>
-
-    <TaskSection
-      :title="'Pending'"
-      :tasks="filteredMainTasksActive"
-      :has-active-filters="hasActiveFilters || search.length > 0"
-      :section = "'pending'"
-
-      @edit-task="editTask"
-      @add-sub-task="addSubTask"
-      @remove-task="handleRemoveClick"
-      @message="message.openMessage"
-    />
-
-    <TaskSection
-      v-if="filteredMainTasksDone.length > 0"
-      :title="'Completed'"
-      :tasks="filteredMainTasksDone"
-      :has-active-filters="hasActiveFilters || search.length > 0"
-      :section = "'completed'"
-      @edit-task="editTask"
-      @add-sub-task="addSubTask"
-      @remove-task="handleRemoveClick"
-      @message="message.openMessage"
-    />
-
     <TaskModal
       :show="showTaskModal"
       :mode="mode"
