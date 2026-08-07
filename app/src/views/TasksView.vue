@@ -14,9 +14,13 @@ import TaskFilterMenu from '../components/menus/TaskFilterMenu.vue'
 import TaskSortMenu from '../components/menus/TaskSortMenu.vue'
 import { compareTasksDate, compareTasksPriority, compareTasksTitle } from '../utils/taskUtils.ts'
 import { onClickOutside } from '@vueuse/core'
+import TagsModal from '../components/ui/TagsModal.vue'
 
 const store = useTasksStore()
 const message = useMessage()
+
+const showTagsModal = ref<boolean>(false)
+
 
 // Filters && search
 const search = ref<string>('')
@@ -151,7 +155,7 @@ function handleToggleSort(key: SortOption){
         <h1>Tasks</h1>
 
         <div class="manage-actions">
-          <button class="add-task-btn">
+          <button class="add-task-btn" @click="showTagsModal = !showTagsModal">
             <Tags :size="16" />
             <p class="tag">Tags</p>
           </button>
@@ -249,6 +253,8 @@ function handleToggleSort(key: SortOption){
       @submit="handleSubmit"
       @close="cancelTaskCreation()"
     />
+
+    <TagsModal   :show="showTagsModal" @close="showTagsModal=false" />
     <Message :show="message.show.value" :type="message.type.value" :msg="message.text.value" @close="message.show.value = false"/>
     <ConfirmModal :show="showConfirmModal" :title="'Delete task'" @cancel="cancelOperation('Task delete operation cancelled')" @confirm="confirmDeleteTask" />
 
@@ -264,6 +270,7 @@ function handleToggleSort(key: SortOption){
 
 .header {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
