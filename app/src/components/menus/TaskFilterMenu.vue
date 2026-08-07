@@ -83,18 +83,15 @@ function handleFilterClick(value: string, title: FilterGroup) {
   z-index: 50;
 
   width: 100%;
-  min-width: 260px;
-  max-height: 70vh;
+  max-height: 320px;
   overflow-y: auto;
 
   margin: 0;
   padding: 16px 18px;
 
   background: var(--color-primary-dark);
-
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,.08);
-
   box-shadow: 0 12px 32px rgba(0,0,0,.35);
 }
 
@@ -248,11 +245,4 @@ function handleFilterClick(value: string, title: FilterGroup) {
   transform: translateY(-6px);
 }
 
-@media (max-width: 480px) {
-  .filter-panel {
-    left: 0;
-    right: 0;
-    width: auto;
-  }
-}
 </style>

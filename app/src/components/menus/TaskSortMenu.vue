@@ -59,7 +59,6 @@ function handleSortClick(key: string) {
   z-index: 50;
 
   width: 100%;
-  min-width: 260px;
   max-height: 70vh;
   overflow-y: auto;
 
@@ -222,13 +221,5 @@ function handleSortClick(key: string) {
 .panel-leave-to {
   opacity: 0;
   transform: translateY(-6px);
-}
-
-@media (max-width: 480px) {
-  .sort-panel {
-    left: 0;
-    right: 0;
-    width: auto;
-  }
 }
 </style>

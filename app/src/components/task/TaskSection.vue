@@ -111,7 +111,7 @@ provide('taskMenu', {
 
 <style scoped>
 .task-section {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .section-header {

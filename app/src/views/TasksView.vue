@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, provide, ref} from 'vue'
+import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { Search, FilterIcon, X, Plus, ArrowDownUp } from 'lucide-vue-next'
 import TaskModal  from '../components/ui/TaskModal.vue'
 import type { Priority, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/ui/Message.vue'
 import ConfirmModal from '../components/ui/ConfirmModal.vue'
-import { useMessage, type MessageState } from '../composables/useMessage.ts'
+import { useMessage} from '../composables/useMessage.ts'
 import { useTaskFilters } from '../composables/useTaskFilters.ts'
 import { useTaskModal } from '../composables/useTaskModal.ts'
 import TaskSection from '../components/task/TaskSection.vue'
@@ -17,7 +17,6 @@ import { onClickOutside } from '@vueuse/core'
 
 const store = useTasksStore()
 const message = useMessage()
-provide<MessageState>('message', message)
 
 // Filters && search
 const search = ref('')
@@ -86,9 +85,9 @@ function handleSubmit(task: {
   closeTaskModal()
 }
 
-function cancelTaskCreation(msg: string){
+function cancelTaskCreation(){
   closeTaskModal()
-  message.openMessage("cancel", msg)
+  message.openMessage("cancel", 'Task creation cancelled')
 }
 
 
@@ -172,12 +171,13 @@ function handleToggleSort(key: string){
         <div class="action-group">
           <button ref="sortButton" class="action-btn" :class="{ active: showSortMenu }" @click="showSortMenu = !showSortMenu">
             <ArrowDownUp :size="16"/>
-            <span class="action-label">Sort</span>
+            <span class="action-label-full">Sort</span>
+            <span class="action-label-compact">{{ sortOptions[sortOptionSelected].label }}</span>
           </button>
 
           <button ref="filterButton" class="action-btn" :class="{ active: showFilters }" @click="showFilters = !showFilters">
             <FilterIcon :size="16"/>
-            <span class="action-label">Filters</span>
+            <span>Filters</span>
           </button>
         </div>
 
@@ -234,14 +234,13 @@ function handleToggleSort(key: string){
       @message="message.openMessage"
     />
 
-
     <TaskModal
       :show="showTaskModal"
       :mode="mode"
       :task="editingTask !== null ? editingTask : undefined"
       :main-task-id="mainTaskId !== null ? mainTaskId : undefined"
       @submit="handleSubmit"
-      @close="cancelTaskCreation('Task creation cancelled')"
+      @close="cancelTaskCreation()"
     />
     <Message :show="message.show.value" :type="message.type.value" :msg="message.text.value" @close="message.show.value = false"/>
     <ConfirmModal :show="showConfirmModal" :title="'Delete task'" @cancel="cancelOperation('Task delete operation cancelled')" @confirm="confirmDeleteTask" />
@@ -391,13 +390,11 @@ function handleToggleSort(key: string){
   color: var(--color-light);
 }
 
-/* ANCHOR for filters dropdown */
 .action-anchor {
   position: relative;
   flex: 1;
 }
 
-/* Actions grouped together visually as one unit */
 .action-group {
   flex: 1;
   display: flex;
@@ -443,6 +440,10 @@ function handleToggleSort(key: string){
 .action-btn.active {
   background: rgba(255,255,255,.1);
   color: white;
+}
+
+.action-label-compact {
+  display: none;
 }
 
 .active-chips-container {
@@ -518,42 +519,30 @@ function handleToggleSort(key: string){
   color: var(--color-light);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 680px) {
   .toolbar {
     flex-wrap: wrap;
   }
 
   .search-bar {
-    flex: 1 1 100%;
-    height: 3rem;
+    width: 100%;
+  }
+
+  .action-anchor {
+    width: 100%;
   }
 
   .sort-info {
     display: none;
   }
 
-  .action-anchor {
-    flex: 1;
-  }
-
-  .action-group {
-    justify-content: space-between;
-  }
-
-  .action-btn {
-    flex: 1;
-    justify-content: center;
-  }
-
-}
-
-@media (max-width: 420px) {
-  .action-label {
+  .action-label-full {
     display: none;
   }
 
-  .action-btn {
-    padding: 8px;
+  .action-label-compact {
+    display: inline;
   }
 }
+
 </style>
