@@ -1,13 +1,14 @@
 export type Task = {
   id: number
-  title: string,
+  title: string
   descricao?: string
   done: boolean
   dueDate?: string
   parentId?: number 
   doneDate?: string
   priority?: Priority
-  favourite: boolean,
+  favourite: boolean
+  tagIds?: string[]
 }
 
 export type Priority = 'high' | 'medium' | 'low' | 'completed'
@@ -21,4 +22,9 @@ export type SortOption = 'priority' | 'title' | 'dueDate'
 export type TaskComparator = {
   label: string;
   function: (a:Task, b: Task) => number
+}
+
+export type Tag = {
+  key: string
+  label: string
 }

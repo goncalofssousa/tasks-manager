@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
-import { Search, FilterIcon, X, Plus, ArrowDownUp } from 'lucide-vue-next'
+import { Search, FilterIcon, X, Plus, ArrowDownUp, Tags } from 'lucide-vue-next'
 import TaskModal  from '../components/ui/TaskModal.vue'
 import type { Priority, SortOption, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/ui/Message.vue'
@@ -150,10 +150,17 @@ function handleToggleSort(key: SortOption){
       <div class="header">
         <h1>Tasks</h1>
 
-        <button class="add-task-btn" @click="newTask">
-          <Plus :size="16"/>
-          Add Task
-        </button>
+        <div class="manage-actions">
+          <button class="add-task-btn">
+            <Tags :size="16" />
+            <p class="tag">Tags</p>
+          </button>
+
+          <button class="add-task-btn" @click="newTask">
+            <Plus :size="16"/>
+            Add Task
+          </button>
+        </div>
       </div>
 
       <div class="toolbar">
@@ -265,8 +272,20 @@ function handleToggleSort(key: SortOption){
   margin-bottom: 16px;
 }
 
-/* ADD BUTTON */
-.add-task-btn {
+.manage-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.manage-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
   width: auto;
   padding: 8px 14px;
 
@@ -274,29 +293,24 @@ function handleToggleSort(key: SortOption){
   border-radius: 10px;
 
   background: #27272a;
-  color: #fafafa;
+  color: #a1a1aa;
 
   font-family: Poppins, sans-serif;
   font-size: .85rem;
-  font-weight: 500;
+  font-weight: 600;
 
   cursor: pointer;
 
   transition: all .2s ease;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
 }
 
-.add-task-btn:hover {
+.manage-actions button:hover {
   transform: translateY(-1px);
   background: #3f3f46;
   border-color: rgba(255,255,255,.18);
 }
 
-.add-task-btn:active {
+.manage-actions button:active {
   transform: translateY(0);
 }
 
@@ -542,6 +556,10 @@ function handleToggleSort(key: SortOption){
   .action-label-compact {
     display: inline;
   }
+
+  .manage-actions button .tag {
+    display: none;
+  } 
 }
 
 </style>

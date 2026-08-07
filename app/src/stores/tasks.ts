@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useHistoryStore } from './history'
 import type { Priority, Task } from '../types/tasks'
 import { toDate } from '../utils/formats'
+import { useTagsStore } from './tags'
 
 export type TasksData = {
   ids: number[], 
@@ -67,6 +68,7 @@ export const useTasksStore = defineStore('tasks', {
         parentId, 
         priority: priority,
         favourite: false, 
+        tagIds: []
       }
 
       this.ids.push(task.id)
@@ -205,5 +207,23 @@ export const useTasksStore = defineStore('tasks', {
       task.favourite = !task.favourite
       historyStore.addActivity("task_favourite", task)
     }, 
+
+    associateTag(taskId: number, tagId: string){
+      const tagsStore = useTagsStore()
+      if(!this.entities[taskId] || !tagsStore.tags[tagId] || this.entities[taskId].tagIds?.includes(tagId)) return
+      this.entities[taskId].tagIds?.unshift(tagId) 
+    },
+
+    removeTagFromTask(taskId: number, tagIdToRemove: string){
+      const tagsStore = useTagsStore()
+      if(!this.entities[taskId] || !tagsStore.tags[tagIdToRemove] || !this.entities[taskId].tagIds?.includes(tagIdToRemove)) return
+      this.entities[taskId].tagIds = this.entities[taskId].tagIds.filter(tagId => tagId != tagIdToRemove)  
+    },
+
+    removeTagFromAllTasks(tagIdToRemove: string){
+      for(const taskId of this.ids){
+        this.entities[taskId].tagIds = this.entities[taskId].tagIds?.filter(tagId => tagId != tagIdToRemove)  
+      }
+    }
   }
 })
