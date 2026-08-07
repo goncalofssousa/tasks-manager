@@ -4,7 +4,7 @@ import { SearchX, CircleCheckBig, ChevronDown } from 'lucide-vue-next'
 
 import { useTasksStore } from '../../stores/tasks.js'
 import type { Task } from '../../types/tasks.js'
-import TaskCard from './TaskCard.vue'
+import TaskCard from '../task/TaskCard.vue'
 
 const store = useTasksStore()
 
@@ -94,7 +94,7 @@ provide('taskMenu', {
         v-for="task in tasks"
         :key="task.id"
         :task="task"
-        :subTasks="store.subTasksMap[task.id] || []"
+        :subTasks="store.subTasksMap[task.id] || []"  
         :compact="section === 'completed'"
 
         @done="markAsDone"

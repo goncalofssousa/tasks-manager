@@ -142,12 +142,19 @@ function submit() {
         </div>
 
         <div v-if="mode !== 'new-sub-task' && mainTaskId === undefined" class="form-group">
-          <label for="priority">Priority</label>
+          <label>Priority</label>
           <div class="priority-picker">
-            <label v-for="option in ['low', 'medium', 'high']" :key="option" class="priority-option" :class="[option, { active: priority === option }]">
-              <input id="priority" type="radio" name="priority" :value="option" :checked="priority === option" @click="priority = priority === option ? undefined : option" />
+            <button 
+              v-for="option in ['low', 'medium', 'high']" 
+              :key="option" 
+              class="priority-option" 
+              :class="[option, { active: priority === option }]"  
+              @click="priority = priority === option ? undefined : option"
+              @keydown.enter.prevent="priority = priority === option ? undefined : option"
+              >
               {{ option.charAt(0).toUpperCase() + option.slice(1) }}
-            </label>  
+              
+            </button>  
           </div>
         </div>
 

@@ -1,5 +1,7 @@
 import { ref } from 'vue'
 
+export type MessageState = ReturnType<typeof useMessage>
+
 export function useMessage(){
     const show = ref<boolean>(false)
     const text = ref<string>('')

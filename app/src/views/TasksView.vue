@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, ref} from 'vue'
+import { computed, provide, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { Search, FilterIcon, X, Plus, ArrowDownUp } from 'lucide-vue-next'
 import TaskModal  from '../components/ui/TaskModal.vue'
 import type { Priority, TaskComparator } from '../types/tasks.ts'
 import Message from '../components/ui/Message.vue'
 import ConfirmModal from '../components/ui/ConfirmModal.vue'
-import { useMessage } from '../composables/useMessage.ts'
+import { useMessage, type MessageState } from '../composables/useMessage.ts'
 import { useTaskFilters } from '../composables/useTaskFilters.ts'
 import { useTaskModal } from '../composables/useTaskModal.ts'
 import TaskSection from '../components/task/TaskSection.vue'
@@ -16,7 +16,8 @@ import { compareTasksDate, compareTasksPriority, compareTasksTitle } from '../ut
 import { onClickOutside } from '@vueuse/core'
 
 const store = useTasksStore()
-const {show, text, type, openMessage} = useMessage()
+const message = useMessage()
+provide<MessageState>('message', message)
 
 // Filters && search
 const search = ref('')
@@ -77,17 +78,17 @@ function handleSubmit(task: {
                       }){
   if(mode.value === 'edit' && editingTask.value !== null){
     store.updateTask(editingTask.value.id, task)
-    openMessage('success', `Task edited sucessfully`)
+    message.openMessage('success', `Task edited sucessfully`)
   } else {
     store.addTask(task.title, task.descricao, task.dueDate, task.parentId, task.priority)
-    openMessage('success', `Task ${task.title} added sucessfully`)
+    message.openMessage('success', `Task ${task.title} added sucessfully`)
   }
   closeTaskModal()
 }
 
 function cancelTaskCreation(msg: string){
   closeTaskModal()
-  openMessage("cancel", msg)
+  message.openMessage("cancel", msg)
 }
 
 
@@ -107,14 +108,14 @@ function closeConfirmModal(){
 
 function cancelOperation(msg: string){
   closeConfirmModal()
-  openMessage("cancel", msg)
+  message.openMessage("cancel", msg)
 }
 
 function confirmDeleteTask(){
   if(!taskToRemove.value) return
   store.removeTask(taskToRemove.value)
   closeConfirmModal()
-  openMessage('success', 'Task removed sucessfully')
+  message.openMessage('success', 'Task removed sucessfully')
 }
 
 // Sort 
@@ -178,7 +179,6 @@ function handleToggleSort(key: string){
             <FilterIcon :size="16"/>
             <span class="action-label">Filters</span>
           </button>
-          
         </div>
 
         <TaskFilterMenu
@@ -219,7 +219,7 @@ function handleToggleSort(key: string){
       @edit-task="editTask"
       @add-sub-task="addSubTask"
       @remove-task="handleRemoveClick"
-      @message="openMessage"
+      @message="message.openMessage"
     />
 
     <TaskSection
@@ -231,7 +231,7 @@ function handleToggleSort(key: string){
       @edit-task="editTask"
       @add-sub-task="addSubTask"
       @remove-task="handleRemoveClick"
-      @message="openMessage"
+      @message="message.openMessage"
     />
 
 
@@ -243,7 +243,7 @@ function handleToggleSort(key: string){
       @submit="handleSubmit"
       @close="cancelTaskCreation('Task creation cancelled')"
     />
-    <Message :show="show" :type="type" :msg="text" @close="show = false"/>
+    <Message :show="message.show.value" :type="message.type.value" :msg="message.text.value" @close="message.show.value = false"/>
     <ConfirmModal :show="showConfirmModal" :title="'Delete task'" @cancel="cancelOperation('Task delete operation cancelled')" @confirm="confirmDeleteTask" />
 
   </div>

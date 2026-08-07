@@ -9,8 +9,8 @@ const taskMenu = inject<{
 }>('taskMenu')!
 
 const props = defineProps<{
-    taskDone: boolean
-    addSubTask: boolean
+  taskDone: boolean
+  showAddSub: boolean
 }>()
 
 const emit = defineEmits<{
@@ -65,41 +65,50 @@ function addSubTask() {
 </script>
 
 <template>
-    <div class="task-actions" :class="{ 'completed': taskDone }">
-        <button ref="button" class="icon-btn" @click="toggleOptions">
-            <EllipsisVertical :size="25"/>
-        </button>
+    <div class="all-actions">
+      <slot></slot>
+      <div class="task-actions" :class="{ 'completed': taskDone }">
+          <button ref="button" class="icon-btn" @click="toggleOptions">
+              <EllipsisVertical :size="25"/>
+          </button>
 
-        <div ref="menu" v-if="showOptions" class="options-menu">
-            <button v-if="!taskDone" class="option-btn done" @click="markAsDone">
-                <Check :size="18"/>
-                Mark as Done
-            </button>
+          <div ref="menu" v-if="showOptions" class="options-menu">
+              <button v-if="!taskDone" class="option-btn done" @click="markAsDone">
+                  <Check :size="18"/>
+                  Mark as Done
+              </button>
 
-            <button v-if="!taskDone && addSubTask" class="option-btn add-subtask" @click="addSubTask">
-                <Plus :size="18"/>
-                Add Subtask
-            </button>
+              <button v-if="!taskDone && showAddSub" class="option-btn add-subtask" @click="addSubTask">
+                  <Plus :size="18"/>
+                  Add Subtask
+              </button>
 
-            <button v-if="!taskDone" class="option-btn edit" @click="editTask">
-                <Pencil :size="18"/>
-                Edit
-            </button>
+              <button v-if="!taskDone" class="option-btn edit" @click="editTask">
+                  <Pencil :size="18"/>
+                  Edit
+              </button>
 
-            <button v-if="taskDone" class="option-btn undone" @click="markAsUndone">
-                <RotateCcw :size="18"/>
-                Mark as Undone
-            </button>
+              <button v-if="taskDone" class="option-btn undone" @click="markAsUndone">
+                  <RotateCcw :size="18"/>
+                  Mark as Undone
+              </button>
 
-            <button class="option-btn delete" @click="deleteTask">
-                <Trash2 :size="18"/>
-                Delete
-            </button>
-        </div>
-    </div>
+              <button class="option-btn delete" @click="deleteTask">
+                  <Trash2 :size="18"/>
+                  Delete
+              </button>
+          </div>
+      </div>
+  </div>
 </template>
 
 <style>
+.all-actions {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+}
+
 .task-actions {
   position: relative;
   display: flex;
