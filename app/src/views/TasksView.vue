@@ -150,7 +150,7 @@ function handleToggleSort(key: SortOption){
 
 <template>
   <div class="page">
-    <div :inert="showTaskModal || showConfirmModal">
+    <div :inert="showTaskModal || showConfirmModal || showTagsModal">
       <div class="header">
         <h1>Tasks</h1>
 

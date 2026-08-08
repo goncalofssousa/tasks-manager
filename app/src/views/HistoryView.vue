@@ -59,12 +59,12 @@ const filteredHistory = computed(() => {
 })
 
 // pagination
-const {page, totalPages, nextPage, prevPage, paginatedHistory} = usePagination(filteredHistory, 10)
+const {page, totalPages, nextPage, prevPage, paginated} = usePagination(filteredHistory, 10)
 
 // group by label 
 const groupedHistory = computed(() => {
   const groups: Record<string, Activity[]> = {}
-  for (const activity of paginatedHistory.value) {
+  for (const activity of paginated.value) {
     const day = activity.date.split('T')[0]
     if (!groups[day]) groups[day] = []
     groups[day].push(activity)

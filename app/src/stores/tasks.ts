@@ -211,7 +211,7 @@ export const useTasksStore = defineStore('tasks', {
     associateTag(taskId: number, tagId: string){
       const tagsStore = useTagsStore()
       if(!this.entities[taskId] || !tagsStore.tags[tagId] || this.entities[taskId].tagIds?.includes(tagId)) return
-      this.entities[taskId].tagIds?.unshift(tagId) 
+      this.entities[taskId].tagIds?.push(tagId) 
     },
 
     removeTagFromTask(taskId: number, tagIdToRemove: string){

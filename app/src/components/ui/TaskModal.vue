@@ -2,6 +2,8 @@
 import { ref, watch, computed } from 'vue'
 import type { ModalAction, Priority, Task } from '../../types/tasks.ts'
 import { useTasksStore } from '../../stores/tasks.ts';
+import { Tags, X } from 'lucide-vue-next';
+import { useTagsStore } from '../../stores/tags.ts';
 
 const tasksStore = useTasksStore()
 
@@ -65,55 +67,74 @@ watch(() => props.show, (open) => {
   priority.value = undefined
 })
 
+// Tags
+const tagsStore = useTagsStore()
+
+const selectedTags = ref<string[]>([])
+
+const showTagDropdown = ref<boolean>(false)
 
 
+const availableTags = computed(() => {
+  return Object.values(tagsStore.tags).filter(tag => !selectedTags.value.includes(tag.key))
+})
+
+const canAdd = computed(() => {
+  return selectedTags.value.length < 3
+})
+
+function toggleTag(key: string){
+  const index = selectedTags.value.indexOf(key)
+  if(index === -1) selectedTags.value.push(key)
+  else selectedTags.value.splice(index, 1)
+  if(selectedTags.value.length >= 3) {
+    showTagDropdown.value = false
+  }
+}
+
+// rest
 const canSend = computed(() => {
-  return (title.value.trim() !== '' && dueDateError.value === '')
+  return (title.value.trim() !== '')
 })
 
-const dueDateError = computed(() => {
-  let parentId: number | undefined
-
-  if (props.mode === 'new-sub-task') {
-    parentId = props.mainTaskId
-  }
-
-  if (props.mode === 'edit') {
-    parentId = props.task?.parentId
-  }
-
-  if (!parentId || !dueDate.value) {
-    return ''
-  }
-
-  const parentDueDate = tasksStore.entities[parentId]?.dueDate
-
-  if (parentDueDate && new Date(dueDate.value) > new Date(parentDueDate)) {
-    return `Sub-task due date cannot exceed ${parentDueDate}`
-  }
-
-  return ''
-})
-
+function clear(){
+  title.value = ''
+  descricao.value = ''
+  dueDate.value = ''
+  priority.value = undefined
+  selectedTags.value = []
+}
 
 function submit() {
   if (!canSend.value) return
-  emit('submit', {
+  const payload = {
     title: title.value,
     descricao: descricao.value,
     dueDate: dueDate.value,
     parentId: props.mainTaskId,
     priority: priority.value
-  })
+  }
+  clear()
+  emit('submit', payload)
+}
+
+function handleCancel(){
+  clear()
+  emit('close')
 }
 </script>
 
 <template>
   <div v-if="show" class="overlay">
     <div class="modal">
-      <h2>
+      <div class="header">
+        <h2>
         {{ modalTitle }}
-      </h2>
+        </h2>
+        <button class="close-btn" @click="$emit('close')">
+          <X :size="16" />
+        </button>
+      </div>
 
       <form class="task-form" @submit.prevent="submit">
 
@@ -133,14 +154,11 @@ function submit() {
         <div class="form-group">
           <label for="date" >Due Date</label>
           <input 
-            id="date" type="date" v-model="dueDate" :class="{ error: dueDateError !== '' }"
+            id="date" type="date" v-model="dueDate" 
             :max="props.mainTaskId ? tasksStore.entities[props.mainTaskId]?.dueDate 
                   : props.task?.parentId ? tasksStore.entities[props.task.parentId]?.dueDate
                   : undefined"
           />
-          <p v-if="dueDateError" class="error-text">
-            {{ dueDateError }}
-          </p>
         </div>
 
         <div v-if="mode !== 'new-sub-task' && mainTaskId === undefined" class="form-group">
@@ -160,8 +178,39 @@ function submit() {
           </div>
         </div>
 
+        <div v-if="mode !== 'new-sub-task' && mainTaskId === undefined" class="form-group">
+          <p>Tags</p>
+
+          <div class="tag-selector">
+            <span v-for="tagKey in selectedTags" :key="tagKey" class="tag-chip">
+              <Tags :size="14"/>
+              {{ tagsStore.tags[tagKey].label }}
+              <button type="button" @click="toggleTag(tagKey)">
+                <X :size="12" />
+              </button>
+            </span>
+
+            <button type="button" class="tag-add-btn" @click="showTagDropdown = !showTagDropdown" :disabled="!canAdd">
+              + Add tag
+            </button>
+          </div>
+
+          <p class="tag-hint">Max 3 tags</p>
+
+          <div v-if="showTagDropdown" class="tag-dropdown">
+            <button v-for="tag in availableTags" :key="tag.key" type="button" class="tag-option" @click="toggleTag(tag.key)">
+              <Tags :size="14"/>
+              {{ tag.label }}
+            </button>
+
+            <p v-if="availableTags.length === 0" class="tag-empty-text">
+              No tags yet — create some in Tag Manager
+            </p>
+          </div>
+        </div>
+
         <div class="modal-actions">
-          <button type="button" class="modal-btn cancel" @click="$emit('close')">
+          <button type="button" class="modal-btn cancel" @click="handleCancel">
             Cancel
           </button>
 
@@ -206,6 +255,30 @@ function submit() {
   gap: 12px;
 }
 
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: var(--color-light);
+  background: rgba(255, 255, 255, 0.08);
+}
 
 .task-form {
   display: flex;
@@ -327,6 +400,140 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: rgba(255,255,255,.08);
   border-color: rgba(255,255,255,.22);
   color: white;
+}
+
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tag-hint {
+  margin: 0;
+  padding: 0 2px;
+
+  color: var(--color-text-secondary);
+  font-size: .65rem;
+  font-weight: 500;
+  opacity: .6;
+}
+
+.tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 6px 4px 10px;
+
+  border-radius: 999px;
+  background: #27272a;
+  border: 1px solid rgba(255,255,255,.08);
+
+  color: var(--color-light);
+  font-size: .75rem;
+  font-family: Poppins, sans-serif;
+  font-weight: 600;
+}
+
+.tag-chip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-secondary);
+
+  cursor: pointer;
+}
+
+.tag-chip button:hover {
+  color: #ef4444;
+  background: rgba(239,68,68,.1);
+}
+
+.tag-add-btn {
+  padding: 4px 10px;
+
+  border-radius: 999px;
+  border: 1px dashed rgba(255,255,255,.18);
+  background: transparent;
+
+  color: var(--color-text-secondary);
+  font-size: .75rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.tag-add-btn:hover {
+  color: white;
+  border-color: rgba(255,255,255,.32);
+}
+
+.tag-add-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  background: #27272a;
+  border-color: rgba(255,255,255,.08);
+  color: #71717a;
+  transform: none;
+  box-shadow: none;
+}
+
+.tag-dropdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  margin-top: 4px;
+  padding: 10px;
+
+  border-radius: 10px;
+  background: #101012;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.tag-option {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: #18181b;
+
+  color: var(--color-text-secondary);
+  font-size: .75rem;
+  font-weight: 500;
+  font-family: Poppins, sans-serif;
+
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.tag-option:hover {
+  border-color: rgba(255,255,255,.2);
+  color: white;
+}
+
+.tag-option.active {
+  background: rgba(255,255,255,.1);
+  border-color: white;
+  color: white;
+}
+
+.tag-empty-text {
+  font-family: Poppins, sans-serif;
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
 }
 
 /* buttons */

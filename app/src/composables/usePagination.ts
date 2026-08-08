@@ -17,7 +17,7 @@ export function usePagination<T>(items: Ref<T[]>, itemsPerPage: number){
         if(page.value > 1) page.value--;       
     }
 
-    const paginatedHistory = computed(() => {
+    const paginated = computed(() => {
         const startIndex = (page.value - 1) * itemsPerPage
         const endIndex = page.value * itemsPerPage
         return items.value.slice(startIndex, endIndex)
@@ -28,6 +28,6 @@ export function usePagination<T>(items: Ref<T[]>, itemsPerPage: number){
         totalPages,
         nextPage,
         prevPage,
-        paginatedHistory
+        paginated
     }
 }

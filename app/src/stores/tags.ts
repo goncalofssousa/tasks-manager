@@ -7,6 +7,12 @@ export const useTagsStore = defineStore('tags', {
         tags: {} as Record<string, Tag>
     }),
 
+    getters: {
+        tagsLength(): number{
+            return Object.values(this.tags).length
+        }
+    },
+
     actions: {
         addTag(label: string){
             const tagId = label.toLowerCase()
