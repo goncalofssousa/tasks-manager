@@ -65,12 +65,16 @@ const {page, totalPages, nextPage, prevPage, paginated: paginatedTags} = usePagi
 
 
         <ul class="tags-list">
-          <li v-for="tag in paginatedTags" :key="tag.label">
+          <li v-for="tag in paginatedTags" :key="tag.key">
             <div class="left">
-              <Tags :size="16" class="tags-empty-icon" />
-              <span class="tag-label">{{ tag.label }}</span>
+              <Tags :size="16" class="tag-icon" :style="{ color: tag.color }"/>
+
+              <span class="tag-label">
+                {{ tag.label }}
+              </span>
             </div>
-            <button class="delete-btn" @click="tagsStore.removeTag(tag.label)">
+
+            <button class="delete-btn" @click="tagsStore.removeTag(tag.key)">
               <Trash2 :size="14" />
             </button>
           </li>
@@ -101,7 +105,7 @@ const {page, totalPages, nextPage, prevPage, paginated: paginatedTags} = usePagi
   flex-direction: column;
   gap: 14px;
   width: 100%;
-  max-width: 50vh;
+  max-width: 40vh;
   max-height: 70vh;
   overflow-y: auto;
   background: var(--color-primary-dark);

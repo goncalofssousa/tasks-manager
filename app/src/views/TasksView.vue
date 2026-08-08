@@ -3,7 +3,7 @@ import { computed, ref} from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { Search, FilterIcon, X, Plus, ArrowDownUp, Tags } from 'lucide-vue-next'
 import TaskModal  from '../components/ui/TaskModal.vue'
-import type { Priority, SortOption, TaskComparator } from '../types/tasks.ts'
+import type { SortOption, TaskComparator, TaskSubmitData } from '../types/tasks.ts'
 import Message from '../components/ui/Message.vue'
 import ConfirmModal from '../components/ui/ConfirmModal.vue'
 import { useMessage} from '../composables/useMessage.ts'
@@ -72,19 +72,13 @@ const {
   closeTaskModal
 } = useTaskModal()
 
-function handleSubmit(task: {
-                        title: string,
-                        descricao: string,
-                        dueDate: string,
-                        parentId?: number
-                        priority?: Priority
-                      }){
+function handleSubmit(data: TaskSubmitData){
   if(mode.value === 'edit' && editingTask.value !== null){
-    store.updateTask(editingTask.value.id, task)
+    store.updateTask(editingTask.value.id, data)
     message.openMessage('success', `Task edited sucessfully`)
   } else {
-    store.addTask(task.title, task.descricao, task.dueDate, task.parentId, task.priority)
-    message.openMessage('success', `Task ${task.title} added sucessfully`)
+    store.addTask(data)
+    message.openMessage('success', `Task ${data.title} added sucessfully`)
   }
   closeTaskModal()
 }

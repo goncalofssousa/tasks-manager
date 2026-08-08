@@ -11,6 +11,15 @@ export type Task = {
   tagIds?: string[]
 }
 
+export type TaskSubmitData = {
+  title: string
+  descricao: string
+  dueDate: string
+  parentId?: number
+  priority?: Priority
+  tagIds: string[]
+}
+
 export type Priority = 'high' | 'medium' | 'low' | 'completed'
 
 export type DueState = 'overdue' | 'today' | 'future' | 'done'
@@ -27,4 +36,5 @@ export type TaskComparator = {
 export type Tag = {
   key: string
   label: string
+  color: string
 }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { useHistoryStore } from './history'
-import type { Priority, Task } from '../types/tasks'
+import type { Task, TaskSubmitData } from '../types/tasks'
 import { toDate } from '../utils/formats'
 import { useTagsStore } from './tags'
 
@@ -50,25 +50,26 @@ export const useTasksStore = defineStore('tasks', {
   },
 
   actions: {
-    addTask(title: string, text: string, date: string, parentId?: number, priority?: Priority) {
-      if (parentId !== undefined) {
-        const parentTask = this.entities[parentId]
+    addTask(data: TaskSubmitData) 
+    {
+      if (data.parentId !== undefined) {
+        const parentTask = this.entities[data.parentId]
 
-        if (parentTask?.dueDate && date === '') {
-          date = parentTask.dueDate
+        if (parentTask?.dueDate && data.dueDate === '') {
+          data.dueDate= parentTask.dueDate
         }
       }
 
       const task = {
         id: Date.now(),
-        title,
-        descricao: text,
+        title: data.title,
+        descricao: data.descricao,
         done: false,
-        dueDate: date,
-        parentId, 
-        priority: priority,
+        dueDate: data.dueDate,
+        parentId: data.parentId, 
+        priority: data.priority,
         favourite: false, 
-        tagIds: []
+        tagIds: data.tagIds
       }
 
       this.ids.push(task.id)
@@ -109,13 +110,7 @@ export const useTasksStore = defineStore('tasks', {
       historyStore.addActivity("task_removed", task) 
     },
 
-    updateTask(id: number, updatedData: {
-        title: string
-        descricao: string
-        dueDate: string
-        priority?: Priority
-      }
-    ) {
+    updateTask(id: number, updatedData: TaskSubmitData) {
       const task = this.entities[id]
       if (!task) return
 
@@ -152,6 +147,7 @@ export const useTasksStore = defineStore('tasks', {
       }
       task.dueDate = updatedData.dueDate
       task.priority = updatedData.priority
+      task.tagIds = updatedData.tagIds
       
       historyStore.addActivity("task_updated", task)
 
