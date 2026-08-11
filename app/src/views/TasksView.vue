@@ -35,17 +35,7 @@ onClickOutside(filterMenu, () => {
   ignore: [filterButton]
 })
 
-const {
-  filtersValue,
-  hasActiveFilters,
-  activeFilters,
-  handleFilterClick,
-  resetFilters,
-  filterOptions,
-  removeFilter,
-  matches,
-} = useTaskFilters()
-
+const {filtersValue, hasActiveFilters, activeFilters, handleFilterClick, resetFilters, filterOptions, removeFilter, matches} = useTaskFilters()
 
 function filterTasks(tasks: typeof store.mainTasksActive) {
   const searchText = search.value.toLowerCase()
@@ -61,16 +51,7 @@ const filteredMainTasksDone = computed(() =>
 )
 
 // TaskModal
-const {
-  showTaskModal,
-  mode,
-  editingTask,
-  mainTaskId,
-  newTask,
-  addSubTask,
-  editTask,
-  closeTaskModal
-} = useTaskModal()
+const {showTaskModal,mode,editingTask,mainTaskId,newTask,addSubTask,editTask,closeTaskModal} = useTaskModal()
 
 function handleSubmit(data: TaskSubmitData){
   if(mode.value === 'edit' && editingTask.value !== null){
@@ -87,7 +68,6 @@ function cancelTaskCreation(){
   closeTaskModal()
   message.openMessage("cancel", 'Task creation cancelled')
 }
-
 
 // Confirm Modal
 const showConfirmModal = ref<boolean>(false)

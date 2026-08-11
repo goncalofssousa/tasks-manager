@@ -53,23 +53,21 @@ function handleFilterClick(value: string, title: FilterGroup) {
       </div>
 
       <div class="filter-body">
-        <div v-for="(filterList, groupName) in filters" :key="groupName" class="filter-group">
-          <span class="filter-title">{{ groupName }}</span>
+        <template v-for="(filterList, groupName) in filters" :key="groupName">
+          <div v-if="filterList.length > 0" class="filter-group">
+            <span class="filter-title">{{ groupName }}</span>
 
-          <div class="filter-list">
-            <label
-              v-for="filter in filterList"
-              :key="filter.value"
-              class="filter-option"
-              @click.prevent="handleFilterClick(filter.value, groupName)"
-            >
-              <span class="checkbox" :class="{ checked: isActive(groupName,filter.value) }">
-                <Check v-if="isActive(groupName,filter.value)" :size="12" />
-              </span>
-              <span class="filter-label">{{ filter.label }}</span>
-            </label>
+            <div class="filter-list">
+              <label v-for="filter in filterList" :key="filter.value" class="filter-option" @click.prevent="handleFilterClick(filter.value, groupName)">
+                <span class="checkbox" :class="{ checked: isActive(groupName, filter.value) }">
+                  <Check v-if="isActive(groupName, filter.value)" :size="12" />
+                </span>
+
+                <span class="filter-label">{{ filter.label }}</span>
+              </label>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </Transition>

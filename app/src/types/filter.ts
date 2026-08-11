@@ -9,4 +9,4 @@ export type ActiveFilter = {
   value: string 
 }
 
-export type FilterGroup = 'priority' | 'favourite' | 'state'
+export type FilterGroup = 'priority' | 'favourite' | 'state' | 'tags'

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import type { Task } from '../../types/tasks.ts'
 import { computed, inject, ref, type Ref } from 'vue'
-import { ChevronDown, Star } from 'lucide-vue-next'
+import { ChevronDown, Star, Tags } from 'lucide-vue-next'
 import SubTaskCard from './SubTaskCard.vue'
 import TaskDate from './TaskDate.vue'
 import TaskActions from './TaskActions.vue'
 import TaskTitleRow from './TaskTitle.vue'
+import { useTagsStore } from '../../stores/tags.ts'
+
+const tagsStore = useTagsStore()
 
 const taskMenu = inject<{
   menuOpen: Ref<boolean>
@@ -17,7 +20,6 @@ const isMenuOpen = computed(() => taskMenu.menuOpen.value)
 const props = defineProps<{
   task: Task
   subTasks: Task[]
-  compact: boolean
 }>()
 
 const emit = defineEmits<{
@@ -42,12 +44,6 @@ const completedSubTasks = computed(() =>
 const progress = computed(() =>
   props.subTasks.length === 0 ? 0 : (completedSubTasks.value / props.subTasks.length) * 100
 )
-
-const progressColor = computed(() => {
-  if (progress.value <= 40) return 'red'
-  if (progress.value <= 70) return 'yellow'
-  return 'green'
-})
 
 const stateClass = computed(() => {
   if (props.task.done) return 'completed'
@@ -80,13 +76,21 @@ function toggleFavourite() {
       </TaskActions>
     </div>
 
-    <p v-if="task.descricao && !compact" class="description">
+    <p v-if="task.descricao && !task.done" class="description">
       {{ task.descricao }}
     </p>
 
+
+    <div v-if="task.tagIds?.length && !task.done" class="tags-container">
+      <button v-for="tagKey in task.tagIds" :key="tagKey" type="button" class="tag-option" :style="{ '--tag-color': tagsStore.tags[tagKey].color }">
+        <Tags :size="14" />
+        {{ tagsStore.tags[tagKey].label }}
+      </button>
+    </div>
+
     <TaskDate v-if="task.dueDate || task.done" :task="task" />
 
-    <div v-if="subTasks.length && !compact" class="progress-wrapper">
+    <div v-if="subTasks.length && !task.done" class="progress-wrapper">
       <div class="progress-header">
         <div class="progress-text">
           Subtasks: {{ completedSubTasks }} / {{ subTasks.length }}
@@ -99,11 +103,11 @@ function toggleFavourite() {
       </div>
 
       <div class="progress-bar">
-        <div class="progress-fill" :class="progressColor" :style="{ width: progress + '%' }" />
+        <div class="progress-fill"  :style="{ width: progress + '%' }"></div>
       </div>
     </div>
 
-    <div v-if="subTasks.length && showSubTasks && !compact" class="subtasks">
+    <div v-if="subTasks.length && showSubTasks && !task.done" class="subtasks">
       <SubTaskCard
         v-for="sub in subTasks"
         :key="sub.id"
@@ -188,10 +192,6 @@ function toggleFavourite() {
   transition: .3s ease;
 }
 
-.progress-fill.red { background: var(--color-priority-high); }
-.progress-fill.yellow { background: var(--color-priority-medium); }
-.progress-fill.green { background: var(--color-priority-completed); }
-
 .toggle-btn {
   background: none;
   border: none;
@@ -237,6 +237,43 @@ function toggleFavourite() {
   box-shadow:
     0 0 12px rgba(255,255,255,.05),
     -2px 0 14px -6px color-mix(in srgb, var(--priority-accent) 65%, transparent);
+}
+
+.tags-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tags-container::-webkit-scrollbar {
+  display: none;
+}
+
+.tag-option {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  color: var(--color-text-secondary);
+  font-size: .7rem;
+  font-weight: 500;
+  font-family: Poppins, sans-serif;
+  cursor: pointer;
+  transition: all .2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tag-option > svg {
+  color: var(--tag-color);
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {

@@ -8,7 +8,7 @@ export type Task = {
   doneDate?: string
   priority?: Priority
   favourite: boolean
-  tagIds?: string[]
+  tagIds: string[]
 }
 
 export type TaskSubmitData = {

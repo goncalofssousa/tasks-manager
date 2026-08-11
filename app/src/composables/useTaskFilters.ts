@@ -2,45 +2,47 @@ import { ref, computed } from 'vue'
 import type { Task } from '../types/tasks'
 import type { ActiveFilter, Filter, FilterGroup } from '../types/filter'
 import { getDueState } from '../utils/taskState'
+import { useTagsStore } from '../stores/tags'
 
 export function useTaskFilters() {
-    const filterOptions: Record<FilterGroup, Filter[]> = {
-        'priority': [
-            {label: 'High Priority', value: 'high'},
-            {label: 'Medium Priority', value: 'medium'},
-            {label: 'Low Priority', value: 'low'},
-        ],
-        'favourite': [
-            {label: 'Favourites', value: 'favourites'},
-            {label: 'Non Favourites', value: 'nonFavourites'},
-        ],
-        'state': [
-            {label: 'Overdue', value: 'overdue'},
-            {label: 'Due Today', value: 'today'},
-            {label: 'Upcoming', value: 'future'},
-        ]
-    }
+    const tagsStore = useTagsStore()
+
+    const filterOptions = computed<Record<FilterGroup, Filter[]>>(() => ({
+    priority: [
+        { label: 'High Priority', value: 'high' },
+        { label: 'Medium Priority', value: 'medium' },
+        { label: 'Low Priority', value: 'low' },
+    ],
+
+    favourite: [
+        { label: 'Favourites', value: 'favourites' },
+        { label: 'Non Favourites', value: 'nonFavourites' },
+    ],
+
+    state: [
+        { label: 'Overdue', value: 'overdue' },
+        { label: 'Due Today', value: 'today' },
+        { label: 'Upcoming', value: 'future' },
+    ],
+
+    tags: tagsStore.tagsToFilter
+}))
 
     const currentFilterValues = ref<Record<FilterGroup,string[]>>({
         'priority': [],
         'favourite': [],
-        'state': []
+        'state': [], 
+        'tags': []
     })
 
-    const hasActiveFilters = computed(() => {
-        for(const key in currentFilterValues.value){
-            const group = key as FilterGroup
-            if(currentFilterValues.value[group].length > 0) return true
-        }
-        return false
-    })
+    const hasActiveFilters = computed(() =>Object.values(currentFilterValues.value).some(filters => filters.length > 0))
 
     const activeFilters = computed<ActiveFilter[]>(() => {
         const active: ActiveFilter[] = []
         for(const key in currentFilterValues.value){
             const group = key as FilterGroup
             for(const entry of currentFilterValues.value[group]){
-                const filter = filterOptions[group].find(filter => filter.value === entry)
+                const filter = filterOptions.value[group].find(filter => filter.value === entry)
                 if(filter){
                     active.push({
                         group: group,
@@ -77,31 +79,41 @@ export function useTaskFilters() {
         }
     }
 
-    function matchesArray(filters: string[], value: string) {
+    function matchesGroup(group: FilterGroup, value: string) {
+        const filters = currentFilterValues.value[group]
         return filters.length === 0 || filters.includes(value)
     }
 
     function matchesPriority(task: Task) {
-        return matchesArray(currentFilterValues.value.priority, task.priority ?? '')
+        return matchesGroup('priority', task.priority ?? '')
     }
 
     function matchesFavourite(task: Task) {
-        return matchesArray(
-            currentFilterValues.value.favourite,
+        return matchesGroup(
+            'favourite',
             task.favourite ? 'favourites' : 'nonFavourites'
         )
     }
 
-    
     function matchesState(task: Task) {
-        return matchesArray(
-            currentFilterValues.value.state,
-            getDueState(task)
-        )
+        return matchesGroup('state', getDueState(task))
+    }
+
+    function matchesTags(task: Task) {
+        const filters = currentFilterValues.value.tags
+
+        if (filters.length === 0) return true
+
+        return task.tagIds.some(tagId => filters.includes(tagId))
     }
 
     function matches(task: Task) {
-        return matchesPriority(task) && matchesFavourite(task) && matchesState(task)
+        return (
+            matchesPriority(task) &&
+            matchesFavourite(task) &&
+            matchesState(task) &&
+            matchesTags(task)
+        )
     }
 
     return {

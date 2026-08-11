@@ -104,7 +104,6 @@ provide('taskMenu', {
 
             :task="task"
             :subTasks="store.subTasksMap[task.id] || []"
-            :compact="section === 'completed'"
 
             @done="markAsDone"
             @undone="markAsUnDone"

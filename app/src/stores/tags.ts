@@ -1,16 +1,17 @@
 import { defineStore } from "pinia";
 import type { Tag } from "../types/tasks";
 import { useTasksStore } from "./tasks";
+import type { Filter } from "../types/filter";
 
 const TAG_COLORS = [
-  '#ef4444',
-  '#f97316',
-  '#eab308',
-  '#22c55e',
-  '#06b6d4',
-  '#3b82f6',
-  '#8b5cf6',
-  '#ec4899'
+  '#d66b6b',
+  '#d88a62',
+  '#c7aa55',
+  '#68aa7d',
+  '#55a9b8',
+  '#648bc4',
+  '#8d78bd',
+  '#c2769a'
 ]
 
 export const useTagsStore = defineStore('tags', {
@@ -21,6 +22,16 @@ export const useTagsStore = defineStore('tags', {
     getters: {
         tagsLength(): number{
             return Object.values(this.tags).length
+        },
+
+        tagsToFilter(): Filter[] {
+            return Object.values(this.tags).map(tag => {
+                const filter = {
+                    label: tag.label,
+                    value: tag.key
+                } 
+                return filter
+            })
         }
     },
 

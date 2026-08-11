@@ -33,7 +33,7 @@ const tags = computed(() => {
 const {page, totalPages, nextPage, prevPage, paginated: paginatedTags} = usePagination(tags, 5)
 
 </script>
-
+  
 <template>
   <div v-if="show" class="overlay">
     <div class="modal">
